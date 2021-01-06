@@ -1,0 +1,181 @@
+
+const SCALE = 15;
+const GRID_GUTTER = 3;
+
+export interface RenderingOptions {
+    width: number
+    height: number
+    showGrid : boolean
+    showTrace : boolean
+    colorGrid: string
+    colorTrace: string
+    colorRover: string
+    colorMarker: string
+}
+
+export type Point = [number, number]
+
+export interface Marker {
+    label: string
+    position: Point
+}
+
+export interface Rover {
+    width: number
+    height: number
+    angle: number
+    position: Point
+}
+
+function drawRover(context: CanvasRenderingContext2D, {width, height}: Rover, color: string){
+    context.save();
+    context.beginPath();
+    context.strokeStyle = color;
+    context.lineWidth = 0.1;
+    context.rect(-width / 2, -height / 2, width, height);
+    context.stroke();
+    context.restore();
+}
+
+function drawPath(context: CanvasRenderingContext2D, {position, angle}: Rover, path: Array<Point>, color: string) {
+    if(path.length < 1) return;
+
+    const [baseX, baseY] = position;
+
+    context.save();
+
+    context.strokeStyle = color;
+    context.lineWidth = 0.1;
+    context.rotate(angle);  // Rotate to the box body frame
+
+    context.beginPath();
+    context.moveTo(0, 0);
+
+    for (let [x, y] of path) {
+        context.lineTo(baseX - x, y - baseY);
+    }
+    context.stroke();
+
+    context.restore();
+}
+
+
+function drawMarkers(context: CanvasRenderingContext2D, {position, angle}: Rover, markers: Array<Marker>, color: string) {
+    if(markers.length < 1) return;
+
+    const [baseX, baseY] = position;
+
+    context.save();
+    context.rotate(angle);
+    context.scale(1, -1);
+
+    for(let marker of markers) {
+        const {
+            position : [x,y],
+            label =  'X'
+        } = marker;
+
+        context.font = "2px SansSerif";
+        context.fillStyle = "purple";
+        context.textAlign = "center";
+
+        context.translate(baseX - x, baseY- y)
+        context.rotate(angle)
+        context.fillText(label, 0, - 1);
+        context.beginPath();
+        context.arc(0,0, .25, 0, Math.PI * 2);
+        context.fill();
+    }
+
+    context.restore();
+}
+
+function drawGrid(context: CanvasRenderingContext2D, {position, angle}: Rover, rasterSize : number, color: string) {
+    const x = position[0];
+    const y = 0 - position[1];
+
+    context.save();
+
+    context.rotate(angle);  // Rotate to the box body frame
+
+    context.lineWidth = 0.025;
+    context.strokeStyle = color;
+
+    const xOffset = x % GRID_GUTTER;
+    const yOffset = y % GRID_GUTTER;
+
+    const gridDim = GRID_GUTTER * rasterSize;
+
+    context.beginPath();
+    for (let i = -gridDim / 2; i <= gridDim / 2; i += GRID_GUTTER) {
+        context.moveTo(xOffset + i, yOffset - gridDim / 2);
+        context.lineTo(xOffset + i, yOffset + gridDim / 2);
+    }
+
+    for (let i = -gridDim / 2; i <= gridDim / 2; i += GRID_GUTTER) {
+        context.moveTo(xOffset - gridDim / 2, yOffset + i);
+        context.lineTo(xOffset + gridDim / 2, yOffset + i);
+    }
+
+    context.stroke();
+    context.restore();
+}
+
+export default function render(
+    context: CanvasRenderingContext2D,
+    rover: Rover,
+    trace: Array<Point>,
+    markers: Array<Marker>,
+    options: RenderingOptions) {
+
+    const {
+        height,
+        width,
+        showGrid = true,
+        showTrace = true,
+        colorTrace = 'blue',
+        colorRover = 'red',
+        colorMarker = 'purple',
+        colorGrid = 'lightgreen'
+    } = options;
+
+    // Clear the canvas
+    context.fillStyle = "black";
+    context.fillRect(0, 0, width, height);
+    //ctx.clearRect(0, 0, w, h);
+
+    // Transform the canvas
+    // Note that we need to flip the y axis since Canvas pixel coordinates
+    // goes from top to bottom, while physics does the opposite.
+    context.save();
+    context.translate(width / 2, height / 2);  // Translate to the center
+
+    context.beginPath();
+
+    context.lineWidth = 0.5;
+    context.strokeStyle = colorGrid;
+
+    const radius = Math.min(width, height) / 2;
+
+    context.arc(0, 0, radius - 1, 0, Math.PI * 2, true);
+    context.stroke();
+
+    context.beginPath();
+    context.arc(0, 0, radius, 0, Math.PI * 2);
+    context.clip();
+
+    context.scale(SCALE, -SCALE);       // Zoom in and flip y axis
+
+    // Draw
+    if(showGrid){
+        drawGrid(context, rover, Math.ceil(width / SCALE / GRID_GUTTER * 1.2), colorGrid);
+    }
+    if(showTrace) {
+        drawPath(context, rover, trace, colorTrace);
+    }
+    drawMarkers(context, rover, markers, colorMarker);
+    drawRover(context, rover, colorRover);
+
+    // Restore transform
+    context.restore();
+}
