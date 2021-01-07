@@ -38,7 +38,7 @@ _with npm_
 
 Please have a look at the examples in the docs.
 
-* [Docs](http://)
+* [Docs](https://davidlinner.github.io/rover/)
 
 ## License
 
