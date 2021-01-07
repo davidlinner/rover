@@ -21,3 +21,13 @@ export interface ActuatorValues {
 export type ControlLoop = (sensors: SensorValues, actuators: ActuatorValues) => ActuatorValues
 
 
+export interface RenderingOptions {
+    width?: number
+    height?: number
+    showGrid?: boolean
+    showTrace?: boolean
+    colorGrid?: string
+    colorTrace?: string
+    colorRover?: string
+    colorMarker?: string
+}

@@ -1,9 +1,9 @@
 import p2 from 'p2';
 import LatLon from 'geodesy/latlon-spherical.js'
 
-import render, {RenderingOptions, Marker, Point} from "./render";
+import render, {Marker, Point} from "./render";
 import {distance} from "./tools";
-import {ControlLoop, Location, LocationOfInterest} from "./types";
+import {ControlLoop, Location, LocationOfInterest, RenderingOptions} from "./types";
 
 const ROVER_WIDTH = .5;
 const ROVER_HEIGHT = 1.0;
@@ -15,26 +15,27 @@ const FIXED_DELTA_TIME = 1 / 60; // Physics "tick" delta time
 
 const CONTROL_INTERVAL = 20; //ms
 
-const BASE_ENGINE_FORCE = 4.0;
+const BASE_ENGINE_FORCE = 1.5;
 
 const INITIAL_WHEEL_CONSTRAINTS: Array<{ localPosition: [number, number], brakeForce: number, sideFriction: number }> = [
     {
-        localPosition: [-0.25, 0.5],
-        brakeForce: 1.75,
-        sideFriction: 4.0
+        localPosition: [.01, 0],
+        brakeForce: 1.0,
+        sideFriction: 5.0
     }, {
-        localPosition: [0.25, 0.5],
-        brakeForce: 1.75,
-        sideFriction: 4.0
-    }, {
+        localPosition: [-.01, 0],
+        brakeForce: 1.0,
+        sideFriction: 5.0
+    },
+    /*{
         localPosition: [-0.25, -0.5],
         brakeForce: 1.75,
-        sideFriction: 4.0
+        sideFriction: 1.0
     }, {
         localPosition: [0.25, -0.5],
         brakeForce: 1.75,
-        sideFriction: 4.0
-    },
+        sideFriction: 1.0
+    },*/
 ]
 
 interface SimulationConfiguration {
@@ -45,7 +46,7 @@ interface SimulationConfiguration {
     element: HTMLElement
 }
 
-export default class Simulation {
+class Simulation {
 
     private readonly context: CanvasRenderingContext2D
 
@@ -73,7 +74,7 @@ export default class Simulation {
         const {
             loop,
             element,
-            renderingOptions,
+            renderingOptions = {},
             locationsOfInterest = [],
             origin
         } = configuration;
@@ -128,7 +129,7 @@ export default class Simulation {
 
         this.offset = new LatLon(origin.latitude, origin.longitude);
 
-        this.animate.bind(this);
+        //this.animate.bind(this);
         requestAnimationFrame(this.animate);
     }
 
@@ -170,7 +171,7 @@ export default class Simulation {
 
         return {
             longitude: this.offset.destinationPoint(Math.abs(x), x <= 0 ? 270 : 90).longitude,
-            latitude: this.offset.destinationPoint(Math.abs(y), y <= 0 ? 0 : 180).latitude
+            latitude: this.offset.destinationPoint(Math.abs(y), y <= 0 ? 180 : 0).latitude
         }
     }
 
@@ -197,10 +198,13 @@ export default class Simulation {
             } = actuatorValues;
 
             if (wheels.length === this.wheels.length) {
-                this.wheels = wheels;
-
                 for(let i = 0; i < wheels.length; i++){
-                    this.wheelConstraints[i].engineForce = BASE_ENGINE_FORCE * wheels[i]
+                    if(wheels[i]<=1.0 && wheels[i]>= -1.0){
+                        this.wheels[i] = wheels[i];
+                        this.wheelConstraints[i].engineForce = BASE_ENGINE_FORCE * wheels[i];
+                    } else {
+                        console.log('Wheel power out of range [-1.0 : 1.0]');
+                    }
                 }
             }
 
@@ -213,16 +217,15 @@ export default class Simulation {
     }
 
     private trackPosition() {
-        const point = this.rover.interpolatedPosition;
+        const position = this.rover.interpolatedPosition;
 
-        const [lastPoint] = this.trace;
-
-        if (!lastPoint || distance(lastPoint, point) > MIN_TRACKING_POINT_DISTANCE) {
-            this.trace.unshift(point);
+        const [lastPosition] = this.trace;
+        if (!lastPosition || distance(lastPosition, position) > MIN_TRACKING_POINT_DISTANCE) {
+            this.trace.unshift([...position]);
         }
     }
 
-    private animate(time: number) {
+    animate = (time: number)  => {
         requestAnimationFrame(this.animate);
 
         // Get the elapsed time since last frame, in seconds
@@ -251,3 +254,5 @@ export default class Simulation {
             this.renderingOptions);
     }
 }
+
+export {Simulation, SimulationConfiguration}

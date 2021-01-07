@@ -1,17 +1,7 @@
+import {RenderingOptions} from "./types";
 
 const SCALE = 15;
 const GRID_GUTTER = 3;
-
-export interface RenderingOptions {
-    width: number
-    height: number
-    showGrid : boolean
-    showTrace : boolean
-    colorGrid: string
-    colorTrace: string
-    colorRover: string
-    colorMarker: string
-}
 
 export type Point = [number, number]
 
@@ -37,8 +27,8 @@ function drawRover(context: CanvasRenderingContext2D, {width, height}: Rover, co
     context.restore();
 }
 
-function drawPath(context: CanvasRenderingContext2D, {position, angle}: Rover, path: Array<Point>, color: string) {
-    if(path.length < 1) return;
+function drawPath(context: CanvasRenderingContext2D, {position, angle}: Rover, trace: Array<Point>, color: string) {
+    if(trace.length < 1) return;
 
     const [baseX, baseY] = position;
 
@@ -51,7 +41,7 @@ function drawPath(context: CanvasRenderingContext2D, {position, angle}: Rover, p
     context.beginPath();
     context.moveTo(0, 0);
 
-    for (let [x, y] of path) {
+    for (let [x, y] of trace) {
         context.lineTo(baseX - x, y - baseY);
     }
     context.stroke();
@@ -129,8 +119,8 @@ export default function render(
     options: RenderingOptions) {
 
     const {
-        height,
-        width,
+        height = 500,
+        width = 500,
         showGrid = true,
         showTrace = true,
         colorTrace = 'blue',
