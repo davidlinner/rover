@@ -1,0 +1,6 @@
+{
+  "entryPoints": ["src/index.ts"],
+  "out": "doc",
+  "excludePrivate": true,
+  "exclude": ["**/*+(.spec|.test).ts"]
+}

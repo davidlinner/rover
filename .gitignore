@@ -1,0 +1,9 @@
+node_modules
+.idea
+.nyc_output
+.DS_Store
+*.log
+.vscode
+.awcache
+.rpt2_cache
+

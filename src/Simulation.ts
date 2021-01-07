@@ -3,7 +3,13 @@ import LatLon from 'geodesy/latlon-spherical.js'
 
 import render, {Marker, Point} from "./render";
 import {distance} from "./tools";
-import {ControlLoop, Location, LocationOfInterest, RenderingOptions} from "./types";
+import {
+    ControlLoop,
+    Location,
+    LocationOfInterest,
+    RenderingOptions,
+    SimulationOptions
+} from "./types";
 
 const ROVER_WIDTH = .5;
 const ROVER_HEIGHT = 1.0;
@@ -15,17 +21,17 @@ const FIXED_DELTA_TIME = 1 / 60; // Physics "tick" delta time
 
 const CONTROL_INTERVAL = 20; //ms
 
-const BASE_ENGINE_FORCE = 1.5;
+const BASE_ENGINE_FORCE = 2.0;
 
 const INITIAL_WHEEL_CONSTRAINTS: Array<{ localPosition: [number, number], brakeForce: number, sideFriction: number }> = [
     {
         localPosition: [.01, 0],
         brakeForce: 1.0,
-        sideFriction: 5.0
+        sideFriction: 3.0
     }, {
         localPosition: [-.01, 0],
         brakeForce: 1.0,
-        sideFriction: 5.0
+        sideFriction: 3.0
     },
     /*{
         localPosition: [-0.25, -0.5],
@@ -38,14 +44,34 @@ const INITIAL_WHEEL_CONSTRAINTS: Array<{ localPosition: [number, number], brakeF
     },*/
 ]
 
-interface SimulationConfiguration {
-    loop: ControlLoop
-    origin: Location
-    locationsOfInterest: Array<LocationOfInterest>
-    renderingOptions: RenderingOptions
-    element: HTMLElement
-}
-
+/**
+ *
+ * A simple, open world top down simulation for a program controlled vehicle.
+ *
+ * Example for initialization
+ * ```
+ * const loop = ({location, heading, clock}, {engines}) => {
+ *   return { engines: [0.7,0.8] }
+ * }
+ *
+ * const simulation = new Simulation({
+ *    loop,
+ *    origin: {
+ *       latitude:52.477050353132384,
+ *       longitude:13.395281227289209
+ *    },
+ *    element: document.querySelector('main'),
+ *    locationsOfInterest: [{
+ *       latitude: 52.47880703639255,
+ *       longitude: 13.395281227289209,
+ *       label: 'A'
+ *    }],
+ * });
+ *
+ * simulation.start();
+ * ```
+ *
+ */
 class Simulation {
 
     private readonly context: CanvasRenderingContext2D
@@ -54,7 +80,7 @@ class Simulation {
     private rover: p2.Body
 
     private wheelConstraints: Array<p2.WheelConstraint>
-    private wheels: Array<number> = INITIAL_WHEEL_CONSTRAINTS.map(() => 0)
+    private engines: Array<number> = INITIAL_WHEEL_CONSTRAINTS.map(() => 0)
 
     private readonly loop: ControlLoop
 
@@ -69,7 +95,12 @@ class Simulation {
     private startTime: number = 0
     private interval: any
 
-    constructor(configuration: SimulationConfiguration) {
+    /**
+     * Initializes a new simulation an starts the visualization without starting the control loop.
+     *
+     * @param simulationOptions Options to run the simulation with.
+     */
+    constructor(simulationOptions: SimulationOptions) {
 
         const {
             loop,
@@ -77,7 +108,7 @@ class Simulation {
             renderingOptions = {},
             locationsOfInterest = [],
             origin
-        } = configuration;
+        } = simulationOptions;
 
         const {
             height = 500,
@@ -143,6 +174,7 @@ class Simulation {
     }
 
     private initMarkers(locationsOfInterest: Array<LocationOfInterest>, origin: Location) {
+        console.log('lois', locationsOfInterest);
         if (origin) {
             this.markers = locationsOfInterest.map(({label, latitude, longitude}) => {
                 const markerLatLon = new LatLon(latitude, longitude);
@@ -155,9 +187,13 @@ class Simulation {
                     label
                 }
             })
+            console.log(this.markers);
         }
     }
 
+    /**
+     * Returns current rover heading.
+     */
     getRoverHeading() {
         let heading = this.rover.angle % (2 * Math.PI);
         if (heading < 0) {
@@ -166,6 +202,9 @@ class Simulation {
         return (180 / Math.PI) * heading;
     }
 
+    /**
+     * Returns current rover location.
+     */
     getRoverLocation(): Location {
         const [x, y] = this.rover.interpolatedPosition;
 
@@ -175,6 +214,9 @@ class Simulation {
         }
     }
 
+    /**
+     * Starts the simulation control loop at an interval less than 50ms.
+     */
     start() {
         if(this.interval){
             throw new Error('Simulation is already running.')
@@ -190,18 +232,18 @@ class Simulation {
                 location: this.getRoverLocation(),
                 clock,
             }, {
-                wheels: this.wheels
+                engines: this.engines
             })
 
             const {
-                wheels
+                engines
             } = actuatorValues;
 
-            if (wheels.length === this.wheels.length) {
-                for(let i = 0; i < wheels.length; i++){
-                    if(wheels[i]<=1.0 && wheels[i]>= -1.0){
-                        this.wheels[i] = wheels[i];
-                        this.wheelConstraints[i].engineForce = BASE_ENGINE_FORCE * wheels[i];
+            if (engines.length === this.engines.length) {
+                for(let i = 0; i < engines.length; i++){
+                    if(engines[i]<=1.0 && engines[i]>= -1.0){
+                        this.engines[i] = engines[i];
+                        this.wheelConstraints[i].engineForce = BASE_ENGINE_FORCE * engines[i];
                     } else {
                         console.log('Wheel power out of range [-1.0 : 1.0]');
                     }
@@ -211,6 +253,9 @@ class Simulation {
         }, CONTROL_INTERVAL);
     }
 
+    /**
+     * Stops the simulation control loop.
+     */
     stop() {
         clearInterval(this.interval);
         this.interval = null;
@@ -225,7 +270,7 @@ class Simulation {
         }
     }
 
-    animate = (time: number)  => {
+    private animate = (time: number)  => {
         requestAnimationFrame(this.animate);
 
         // Get the elapsed time since last frame, in seconds
@@ -255,4 +300,4 @@ class Simulation {
     }
 }
 
-export {Simulation, SimulationConfiguration}
+export {Simulation, SimulationOptions}
