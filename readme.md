@@ -35,30 +35,45 @@ Basic example:
 ```js
 import {Simulation} from 'rover';
 
+// Create a simple control function which only tells the engines to go forward, left a bit slower, so we drive in a circle
+// The control function will be called periodically in the control loop 
 const loop = ({location, heading, clock}, {engines}) => {    
     return {
         engines: [0.5,0.8]
     }
 }
 
+// Create a new simulation
 const simulation = new Simulation({
+    // add above loop 
     loop,
+
+    // define the origin offset of the rover on the planet,
     origin: {
         latitude:52.477050353132384,
         longitude:13.395281227289209
     },
+
+    // select the DOM element the visualization canvas should be appended to as child
     element: document.querySelector('main'),
+
+    // define a list of static points to be rendered in the visualization (nice for waypoints)
     locationsOfInterest: [{
         latitude: 52.47880703639255,
         longitude: 13.395281227289209,
         label: 'A'
     }],
+  
+    // set rending options like size and colors
+    // consult the API docs for all switches and params 
     renderingOptions: {
-        width: 500,
-        height: 500
+        width: 500, // width of created canvas
+        height: 500 // height of created canvas
     }
 });
 
+// as soon as the simulation is created the visualization is rendered,
+// but have to explicitely start the control loop
 simulation.start();
 ```
 
