@@ -19,6 +19,7 @@ export interface SensorValues {
 }
 export interface ActuatorValues {
     engines: Array<number>;
+    debug?: Record<string, string>;
 }
 export declare type ControlLoop = (sensors: SensorValues, actuators: ActuatorValues) => ActuatorValues;
 export interface RenderingOptions {

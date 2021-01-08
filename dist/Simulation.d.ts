@@ -13,6 +13,7 @@ declare class Simulation {
     private lastRenderTime;
     private startTime;
     private interval;
+    debug: Record<string, string>;
     constructor(simulationOptions: SimulationOptions);
     private createCanvas;
     private initMarkers;

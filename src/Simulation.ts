@@ -95,6 +95,8 @@ class Simulation {
     private startTime: number = 0
     private interval: any
 
+    debug: Record<string, string> = {}
+
     /**
      * Initializes a new simulation an starts the visualization without starting the control loop.
      *
@@ -236,8 +238,11 @@ class Simulation {
             })
 
             const {
-                engines
+                engines,
+                debug,
             } = actuatorValues;
+
+            this.debug = debug || {};
 
             if (engines.length === this.engines.length) {
                 for(let i = 0; i < engines.length; i++){
@@ -296,7 +301,9 @@ class Simulation {
             },
             this.trace,
             this.markers,
-            this.renderingOptions);
+            this.renderingOptions,
+            this.debug,
+        );
     }
 }
 

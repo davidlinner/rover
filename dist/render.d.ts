@@ -10,4 +10,4 @@ export interface Rover {
     angle: number;
     position: Point;
 }
-export default function render(context: CanvasRenderingContext2D, rover: Rover, trace: Array<Point>, markers: Array<Marker>, options: RenderingOptions): void;
+export default function render(context: CanvasRenderingContext2D, rover: Rover, trace: Array<Point>, markers: Array<Marker>, options: RenderingOptions, debug: Record<string, string>): void;

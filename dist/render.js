@@ -11,6 +11,15 @@ function drawRover(context, { width, height }, color) {
     context.stroke();
     context.restore();
 }
+function drawDebugValues(context, debugValues) {
+    context.save();
+    context.font = '12px monospace';
+    context.fillStyle = 'white';
+    Object.entries(debugValues).forEach(([key, value], index) => {
+        context.fillText(`${key}: ${value}`, 10, 15 + (index * 14));
+    });
+    context.restore();
+}
 function drawPath(context, { position, angle }, trace, color) {
     if (trace.length < 1)
         return;
@@ -70,7 +79,7 @@ function drawGrid(context, { position, angle }, rasterSize, color) {
     context.stroke();
     context.restore();
 }
-function render(context, rover, trace, markers, options) {
+function render(context, rover, trace, markers, options, debug) {
     const { height = 500, width = 500, showGrid = true, showTrace = true, colorTrace = 'blue', colorRover = 'red', colorMarker = 'purple', colorGrid = 'lightgreen' } = options;
     context.fillStyle = "black";
     context.fillRect(0, 0, width, height);
@@ -95,5 +104,6 @@ function render(context, rover, trace, markers, options) {
     drawMarkers(context, rover, markers, colorMarker);
     drawRover(context, rover, colorRover);
     context.restore();
+    drawDebugValues(context, debug);
 }
 exports.default = render;
