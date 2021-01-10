@@ -33,8 +33,10 @@ class Simulation {
         this.markers = [];
         this.lastRenderTime = 0;
         this.startTime = 0;
+        this.interval = null;
+        this.animationFrame = null;
         this.animate = (time) => {
-            requestAnimationFrame(this.animate);
+            this.animationFrame = requestAnimationFrame(this.animate);
             let deltaTime = this.lastRenderTime ? (time - this.lastRenderTime) / 1000 : 0;
             this.lastRenderTime = time;
             deltaTime = Math.min(1 / 10, deltaTime);
@@ -77,7 +79,6 @@ class Simulation {
         this.renderingOptions = Object.assign(Object.assign({}, renderingOptions), { width,
             height });
         this.offset = new latlon_spherical_js_1.default(origin.latitude, origin.longitude);
-        requestAnimationFrame(this.animate);
     }
     createCanvas(parent, width, height) {
         const document = parent.ownerDocument;
@@ -121,7 +122,7 @@ class Simulation {
             throw new Error('Simulation is already running.');
         }
         this.startTime = (new Date()).getTime();
-        this.interval = setInterval(() => {
+        this.interval = window.setInterval(() => {
             const clock = (new Date()).getTime() - this.startTime;
             const actuatorValues = this.loop({
                 heading: this.getRoverHeading(),
@@ -143,10 +144,17 @@ class Simulation {
                 }
             }
         }, CONTROL_INTERVAL);
+        this.animationFrame = requestAnimationFrame(this.animate);
     }
     stop() {
-        clearInterval(this.interval);
-        this.interval = null;
+        if (this.interval != null) {
+            clearInterval(this.interval);
+            this.interval = null;
+        }
+        if (this.animationFrame != null) {
+            cancelAnimationFrame(this.animationFrame);
+            this.animationFrame = null;
+        }
     }
     trackPosition() {
         const position = this.rover.interpolatedPosition;
