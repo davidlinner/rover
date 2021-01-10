@@ -222,11 +222,11 @@ class Simulation {
             throw new Error('Simulation is already running.')
         }
 
-        this.startTime = (new Date()).getTime();
+        this.startTime = performance.now();
 
         this.interval = setInterval(() => {
 
-            const clock = (new Date()).getTime() - this.startTime;
+            const clock = performance.now() - this.startTime;
             const actuatorValues = this.loop({
                 heading: this.getRoverHeading(),
                 location: this.getRoverLocation(),
