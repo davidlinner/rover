@@ -86,7 +86,7 @@ be added to the control loop.
 
 Example with some environmental error:
 
-```
+```js
 // Import main Simulation class and error factory function  
 import {Simulation, AUTHENTICITY_LEVEL1} from 'rover';
 
