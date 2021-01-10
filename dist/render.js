@@ -48,6 +48,30 @@ function drawMarkers(context, { position, angle }, markers, color) {
     }
     context.restore();
 }
+function drawCompass(context, { angle }, radius, color) {
+    context.save();
+    context.translate(context.canvas.width / 2, context.canvas.height / 2);
+    context.rotate(-angle);
+    const fontSize = 16;
+    context.font = fontSize + 'px sans-serif';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillStyle = color;
+    const directions = [
+        { label: 'N', offset: [0, -radius + fontSize] },
+        { label: 'O', offset: [radius - fontSize, 0] },
+        { label: 'S', offset: [0, radius - fontSize] },
+        { label: 'W', offset: [-radius + fontSize, 0] },
+    ];
+    for (const direction of directions) {
+        context.save();
+        context.translate(...direction.offset);
+        context.rotate(angle);
+        context.fillText(direction.label, 0, 0);
+        context.restore();
+    }
+    context.restore();
+}
 function drawGrid(context, { position, angle }, rasterSize, color) {
     const x = position[0];
     const y = 0 - position[1];
@@ -71,7 +95,7 @@ function drawGrid(context, { position, angle }, rasterSize, color) {
     context.restore();
 }
 function render(context, rover, trace, markers, options) {
-    const { height = 500, width = 500, showGrid = true, showTrace = true, colorTrace = 'blue', colorRover = 'red', colorMarker = 'purple', colorGrid = 'lightgreen' } = options;
+    const { height = 500, width = 500, showGrid = true, showTrace = true, showCompass = true, colorTrace = 'blue', colorRover = 'red', colorMarker = 'purple', colorGrid = 'lightgreen', colorCompass = 'lime', } = options;
     context.fillStyle = "black";
     context.fillRect(0, 0, width, height);
     context.save();
@@ -95,5 +119,8 @@ function render(context, rover, trace, markers, options) {
     drawMarkers(context, rover, markers, colorMarker);
     drawRover(context, rover, colorRover);
     context.restore();
+    if (showCompass) {
+        drawCompass(context, rover, radius, colorCompass);
+    }
 }
 exports.default = render;
