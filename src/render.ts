@@ -84,6 +84,35 @@ function drawMarkers(context: CanvasRenderingContext2D, {position, angle}: Rover
     context.restore();
 }
 
+function drawCompass(context: CanvasRenderingContext2D, {angle}: Rover, radius: number, color: string) {
+    context.save();
+    context.translate(context.canvas.width / 2, context.canvas.height / 2);
+    context.rotate(-angle);
+
+    const fontSize = 16;
+    context.font = fontSize + 'px sans-serif';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillStyle = color;
+
+    const directions: Array<{label: string, offset: [x: number, y: number]}> = [
+        {label: 'N', offset: [0, -radius + fontSize]},
+        {label: 'O', offset: [radius - fontSize, 0]},
+        {label: 'S', offset: [0, radius - fontSize]},
+        {label: 'W', offset: [-radius + fontSize, 0]},
+    ]
+
+    for (const direction of directions) {
+        context.save()
+        context.translate(...direction.offset)
+        context.rotate(angle)
+        context.fillText(direction.label, 0, 0);
+        context.restore()
+    }
+
+    context.restore();
+}
+
 function drawGrid(context: CanvasRenderingContext2D, {position, angle}: Rover, rasterSize : number, color: string) {
     const x = position[0];
     const y = 0 - position[1];
@@ -127,10 +156,12 @@ export default function render(
         width = 500,
         showGrid = true,
         showTrace = true,
+        showCompass = true,
         colorTrace = 'blue',
         colorRover = 'red',
         colorMarker = 'purple',
-        colorGrid = 'lightgreen'
+        colorGrid = 'lightgreen',
+        colorCompass = 'lime',
     } = options;
 
     // Clear the canvas
@@ -172,4 +203,8 @@ export default function render(
 
     // Restore transform
     context.restore();
+
+    if (showCompass) {
+        drawCompass(context, rover, radius, colorCompass);
+    }
 }
