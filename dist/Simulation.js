@@ -33,9 +33,10 @@ class Simulation {
         this.markers = [];
         this.lastRenderTime = 0;
         this.startTime = 0;
-        this.debug = {};
+        this.interval = null;
+        this.animationFrame = null;
         this.animate = (time) => {
-            requestAnimationFrame(this.animate);
+            this.animationFrame = requestAnimationFrame(this.animate);
             let deltaTime = this.lastRenderTime ? (time - this.lastRenderTime) / 1000 : 0;
             this.lastRenderTime = time;
             deltaTime = Math.min(1 / 10, deltaTime);
@@ -46,7 +47,7 @@ class Simulation {
                 angle: this.rover.angle,
                 width: ROVER_WIDTH,
                 height: ROVER_HEIGHT
-            }, this.trace, this.markers, this.renderingOptions, this.debug);
+            }, this.trace, this.markers, this.renderingOptions);
         };
         const { loop, element, renderingOptions = {}, locationsOfInterest = [], origin } = simulationOptions;
         const { height = 500, width = 500 } = renderingOptions;
@@ -78,7 +79,6 @@ class Simulation {
         this.renderingOptions = Object.assign(Object.assign({}, renderingOptions), { width,
             height });
         this.offset = new latlon_spherical_js_1.default(origin.latitude, origin.longitude);
-        requestAnimationFrame(this.animate);
     }
     createCanvas(parent, width, height) {
         const document = parent.ownerDocument;
@@ -121,9 +121,9 @@ class Simulation {
         if (this.interval) {
             throw new Error('Simulation is already running.');
         }
-        this.startTime = performance.now();
-        this.interval = setInterval(() => {
-            const clock = performance.now() - this.startTime;
+        this.startTime = (new Date()).getTime();
+        this.interval = window.setInterval(() => {
+            const clock = (new Date()).getTime() - this.startTime;
             const actuatorValues = this.loop({
                 heading: this.getRoverHeading(),
                 location: this.getRoverLocation(),
@@ -131,8 +131,7 @@ class Simulation {
             }, {
                 engines: this.engines
             });
-            const { engines, debug, } = actuatorValues;
-            this.debug = debug || {};
+            const { engines } = actuatorValues;
             if (engines.length === this.engines.length) {
                 for (let i = 0; i < engines.length; i++) {
                     if (engines[i] <= 1.0 && engines[i] >= -1.0) {
@@ -145,10 +144,17 @@ class Simulation {
                 }
             }
         }, CONTROL_INTERVAL);
+        this.animationFrame = requestAnimationFrame(this.animate);
     }
     stop() {
-        clearInterval(this.interval);
-        this.interval = null;
+        if (this.interval != null) {
+            clearInterval(this.interval);
+            this.interval = null;
+        }
+        if (this.animationFrame != null) {
+            cancelAnimationFrame(this.animationFrame);
+            this.animationFrame = null;
+        }
     }
     trackPosition() {
         const position = this.rover.interpolatedPosition;

@@ -93,7 +93,8 @@ class Simulation {
 
     private lastRenderTime: number = 0
     private startTime: number = 0
-    private interval: any
+    private interval: number | null = null
+    private animationFrame: number | null = null
 
     debug: Record<string, string> = {}
 
@@ -161,9 +162,6 @@ class Simulation {
         };
 
         this.offset = new LatLon(origin.latitude, origin.longitude);
-
-        //this.animate.bind(this);
-        requestAnimationFrame(this.animate);
     }
 
     private createCanvas(parent: HTMLElement, width: number, height: number): HTMLCanvasElement {
@@ -226,7 +224,7 @@ class Simulation {
 
         this.startTime = performance.now();
 
-        this.interval = setInterval(() => {
+        this.interval = window.setInterval(() => {
 
             const clock = performance.now() - this.startTime;
             const actuatorValues = this.loop({
@@ -256,14 +254,23 @@ class Simulation {
             }
 
         }, CONTROL_INTERVAL);
+
+        this.animationFrame = requestAnimationFrame(this.animate);
     }
 
     /**
      * Stops the simulation control loop.
      */
     stop() {
-        clearInterval(this.interval);
-        this.interval = null;
+        if (this.interval != null) {
+            clearInterval(this.interval);
+            this.interval = null;
+        }
+
+        if (this.animationFrame != null) {
+            cancelAnimationFrame(this.animationFrame);
+            this.animationFrame = null;
+        }
     }
 
     private trackPosition() {
@@ -276,7 +283,7 @@ class Simulation {
     }
 
     private animate = (time: number)  => {
-        requestAnimationFrame(this.animate);
+        this.animationFrame = requestAnimationFrame(this.animate);
 
         // Get the elapsed time since last frame, in seconds
         let deltaTime = this.lastRenderTime ? (time - this.lastRenderTime) / 1000 : 0;

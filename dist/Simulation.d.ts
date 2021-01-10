@@ -1,6 +1,6 @@
 import { Location, SimulationOptions } from "./types";
 declare class Simulation {
-    readonly context: CanvasRenderingContext2D;
+    private readonly context;
     private world;
     private rover;
     private wheelConstraints;
@@ -13,7 +13,7 @@ declare class Simulation {
     private lastRenderTime;
     private startTime;
     private interval;
-    debug: Record<string, string>;
+    private animationFrame;
     constructor(simulationOptions: SimulationOptions);
     private createCanvas;
     private initMarkers;
