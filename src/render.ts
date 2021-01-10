@@ -59,22 +59,26 @@ function drawMarkers(context: CanvasRenderingContext2D, {position, angle}: Rover
     context.rotate(angle);
     context.scale(1, -1);
 
+    context.font = "2px SansSerif";
+    context.fillStyle = "purple";
+    context.textAlign = "center";
+
     for(let marker of markers) {
         const {
-            position : [x,y],
+            position = [0, 0],
             label =  'X'
         } = marker;
 
-        context.font = "2px SansSerif";
-        context.fillStyle = "purple";
-        context.textAlign = "center";
+        const [x,y] = position;
 
-        context.translate(baseX - x, baseY- y)
+        context.save();
+        context.translate(baseX - x, baseY - y)
         context.rotate(angle)
         context.fillText(label, 0, - 1);
         context.beginPath();
         context.arc(0,0, .25, 0, Math.PI * 2);
         context.fill();
+        context.restore();
     }
 
     context.restore();
