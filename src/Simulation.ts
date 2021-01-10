@@ -74,7 +74,7 @@ const INITIAL_WHEEL_CONSTRAINTS: Array<{ localPosition: [number, number], brakeF
  */
 class Simulation {
 
-    private readonly context: CanvasRenderingContext2D
+    readonly context: CanvasRenderingContext2D
 
     private world: p2.World
     private rover: p2.Body

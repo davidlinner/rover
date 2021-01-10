@@ -1,6 +1,6 @@
 import { Location, SimulationOptions } from "./types";
 declare class Simulation {
-    private readonly context;
+    readonly context: CanvasRenderingContext2D;
     private world;
     private rover;
     private wheelConstraints;
