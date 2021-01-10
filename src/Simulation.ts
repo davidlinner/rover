@@ -6,10 +6,11 @@ import {distance} from "./tools";
 import {
     ControlLoop,
     Location,
-    LocationOfInterest,
+    LocationOfInterest, PhysicalOptions,
     RenderingOptions,
     SimulationOptions
 } from "./types";
+import {AUTHENTICITY_LEVEL0} from "./Authenticity";
 
 const ROVER_WIDTH = .5;
 const ROVER_HEIGHT = 1.0;
@@ -32,16 +33,7 @@ const INITIAL_WHEEL_CONSTRAINTS: Array<{ localPosition: [number, number], brakeF
         localPosition: [-.01, 0],
         brakeForce: 1.0,
         sideFriction: 3.0
-    },
-    /*{
-        localPosition: [-0.25, -0.5],
-        brakeForce: 1.75,
-        sideFriction: 1.0
-    }, {
-        localPosition: [0.25, -0.5],
-        brakeForce: 1.75,
-        sideFriction: 1.0
-    },*/
+    }
 ]
 
 /**
@@ -90,6 +82,7 @@ class Simulation {
     private markers: Array<Marker> = []
 
     private readonly renderingOptions: RenderingOptions;
+    private readonly physicalOptions: PhysicalOptions;
 
     private lastRenderTime: number = 0
     private startTime: number = 0
@@ -106,6 +99,8 @@ class Simulation {
             loop,
             element,
             renderingOptions = {},
+            vehicleOptions = {engineCount:2},
+            physicalConstraints = AUTHENTICITY_LEVEL0,
             locationsOfInterest = [],
             origin
         } = simulationOptions;
@@ -158,6 +153,8 @@ class Simulation {
             height
         };
 
+        this.physicalOptions = physicalConstraints(vehicleOptions);
+
         this.offset = new LatLon(origin.latitude, origin.longitude);
 
         //this.animate.bind(this);
@@ -199,7 +196,13 @@ class Simulation {
         if (heading < 0) {
             heading += 2 * Math.PI
         }
-        return (180 / Math.PI) * heading;
+        const trueHeading =  (180 / Math.PI) * heading;
+
+        const {
+            errorHeading = d=>d
+        } = this.physicalOptions;
+
+        return errorHeading(trueHeading);
     }
 
     /**
@@ -208,10 +211,16 @@ class Simulation {
     getRoverLocation(): Location {
         const [x, y] = this.rover.interpolatedPosition;
 
-        return {
+        const trueLocation = {
             longitude: this.offset.destinationPoint(Math.abs(x), x <= 0 ? 270 : 90).longitude,
             latitude: this.offset.destinationPoint(Math.abs(y), y <= 0 ? 180 : 0).latitude
         }
+
+        const {
+            errorLocation = location => location
+        } = this.physicalOptions;
+
+        return errorLocation(trueLocation);
     }
 
     /**
@@ -239,11 +248,18 @@ class Simulation {
                 engines
             } = actuatorValues;
 
+            const {
+                errorEngine = []
+            } = this.physicalOptions;
+
             if (engines.length === this.engines.length) {
                 for(let i = 0; i < engines.length; i++){
                     if(engines[i]<=1.0 && engines[i]>= -1.0){
                         this.engines[i] = engines[i];
-                        this.wheelConstraints[i].engineForce = BASE_ENGINE_FORCE * engines[i];
+
+                        const errorFunction = errorEngine[i] || (v=>v);
+
+                        this.wheelConstraints[i].engineForce = BASE_ENGINE_FORCE * errorFunction(engines[i]);
                     } else {
                         console.log('Wheel power out of range [-1.0 : 1.0]');
                     }
