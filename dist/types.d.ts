@@ -27,8 +27,10 @@ export interface RenderingOptions {
     height?: number;
     showGrid?: boolean;
     showTrace?: boolean;
+    showCompass?: boolean;
     colorGrid?: string;
     colorTrace?: string;
     colorRover?: string;
     colorMarker?: string;
+    colorCompass?: string;
 }

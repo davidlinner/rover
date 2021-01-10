@@ -116,6 +116,11 @@ export interface RenderingOptions {
     showTrace?: boolean
 
     /**
+     * Renders compass directions if true.
+     */
+    showCompass?: boolean
+
+    /**
      * Hex color value of CSS color name for the grid lines.
      */
     colorGrid?: string
@@ -134,4 +139,9 @@ export interface RenderingOptions {
      * Hex color value of CSS color name for markers.
      */
     colorMarker?: string
+
+    /**
+     * Hex color value of CSS color name for compass.
+     */
+    colorCompass?: string
 }
