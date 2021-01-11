@@ -35,7 +35,9 @@ export function AUTHENTICITY_LEVEL1 (vehicleOptions?:VehicleOptions): PhysicalOp
     const maxEngineError = 0.01; //power
     const maxLocationError = 5; //meters
 
-    const errorHeading = (heading:number) =>  maxHeadingError * (Math.random() * 2 - 1) + heading;
+    const errorHeading = (heading:number) =>
+        (360 + heading + maxHeadingError * (Math.random() * 2 - 1)) % 360;
+
     const errorEngine = Array.from({ length: engineCount }, () => {
         const staticEngineError = maxEngineError * (Math.random() * 2 - 1);
         return (value:number) => value + staticEngineError;
