@@ -1,6 +1,6 @@
 {
   "name": "rover",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Library for the simulation of a rover including a simple top-down visualization.",
   "author": "David Linner <david.linner@srh.de>",
   "license": "UNLICENSED",
