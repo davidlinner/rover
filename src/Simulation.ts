@@ -22,18 +22,31 @@ const FIXED_DELTA_TIME = 1 / 60; // Physics "tick" delta time
 
 const CONTROL_INTERVAL = 20; //ms
 
-const BASE_ENGINE_FORCE = 2.0;
+const BASE_ENGINE_FORCE = 1.0;
 
 const INITIAL_WHEEL_CONSTRAINTS: Array<{ localPosition: [number, number], brakeForce: number, sideFriction: number }> = [
     {
-        localPosition: [.01, 0],
-        brakeForce: 1.0,
+        localPosition: [.25, 0],
+        brakeForce: 0.5,
         sideFriction: 3.0
-    }, {
-        localPosition: [-.01, 0],
-        brakeForce: 1.0,
+    },
+    {
+        localPosition: [-.25, 0],
+        brakeForce: 0.5,
         sideFriction: 3.0
-    }
+    },
+    // we add to stabilizing wheels which stops radial movement after the accelerating radial force is gone
+    // TODO: remove when a better physics engine or better parameterization for P2 is found
+    {
+        localPosition: [0, 0.25],
+        brakeForce: 0,
+        sideFriction: .075
+    },
+    {
+        localPosition: [0, -0.25],
+        brakeForce: 0,
+        sideFriction: .075
+    },
 ]
 
 /**
@@ -72,7 +85,7 @@ class Simulation {
     private rover: p2.Body
 
     private wheelConstraints: Array<p2.WheelConstraint>
-    private engines: Array<number> = INITIAL_WHEEL_CONSTRAINTS.map(() => 0)
+    private engines = [0,0]
 
     private readonly loop: ControlLoop
 
@@ -100,7 +113,6 @@ class Simulation {
             loop,
             element,
             renderingOptions = {},
-            vehicleOptions = {engineCount:2},
             physicalConstraints = AUTHENTICITY_LEVEL0,
             locationsOfInterest = [],
             origin
@@ -154,7 +166,7 @@ class Simulation {
             height
         };
 
-        this.physicalOptions = physicalConstraints(vehicleOptions);
+        this.physicalOptions = physicalConstraints({engineCount:2}); // constant for the moment
 
         this.offset = new LatLon(origin.latitude, origin.longitude);
     }
@@ -259,7 +271,7 @@ class Simulation {
 
                         this.wheelConstraints[i].engineForce = BASE_ENGINE_FORCE * errorFunction(engines[i]);
                     } else {
-                        console.log('Wheel power out of range [-1.0 : 1.0]');
+                        console.error('Wheel power out of range [-1.0 : 1.0]');
                     }
                 }
             }
