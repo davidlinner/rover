@@ -88,7 +88,7 @@ export function AUTHENTICITY_LEVEL2(vehicleOptions?: VehicleOptions): PhysicalOp
 		const { latitude, longitude } = location;
 
 		const l0 = new LatLon(latitude, longitude);
-		const l1 = l0.destinationPoint(Math.random() * maxLocationError, Math.random() * 359.999);
+		const l1 = l0.destinationPoint(randn_bm(-maxLocationError, maxLocationError), Math.random() * 359.999);
 
 		return {
 			latitude: l1.latitude,
