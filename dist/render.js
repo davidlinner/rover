@@ -34,9 +34,9 @@ function drawMarkers(context, { position, angle }, markers, color) {
     context.save();
     context.rotate(angle);
     context.scale(1, -1);
-    context.font = "2px SansSerif";
-    context.fillStyle = "purple";
-    context.textAlign = "center";
+    context.font = '2px SansSerif';
+    context.fillStyle = 'purple';
+    context.textAlign = 'center';
     for (let marker of markers) {
         const { position = [0, 0], label = 'X' } = marker;
         const [x, y] = position;
@@ -45,7 +45,7 @@ function drawMarkers(context, { position, angle }, markers, color) {
         context.rotate(angle);
         context.fillText(label, 0, -1);
         context.beginPath();
-        context.arc(0, 0, .25, 0, Math.PI * 2);
+        context.arc(0, 0, 0.25, 0, Math.PI * 2);
         context.fill();
         context.restore();
     }
@@ -99,7 +99,7 @@ function drawGrid(context, { position, angle }, rasterSize, color) {
 }
 function render(context, rover, trace, markers, options) {
     const { height = 500, width = 500, showGrid = true, showTrace = true, showCompass = true, colorTrace = 'blue', colorRover = 'red', colorMarker = 'purple', colorGrid = 'lightgreen', colorCompass = 'lime', } = options;
-    context.fillStyle = "black";
+    context.fillStyle = 'black';
     context.fillRect(0, 0, width, height);
     context.save();
     context.translate(width / 2, height / 2);
@@ -114,7 +114,7 @@ function render(context, rover, trace, markers, options) {
     context.clip();
     context.scale(SCALE, -SCALE);
     if (showGrid) {
-        drawGrid(context, rover, Math.ceil(width / SCALE / GRID_GUTTER * 1.2), colorGrid);
+        drawGrid(context, rover, Math.ceil((width / SCALE / GRID_GUTTER) * 1.2), colorGrid);
     }
     if (showTrace) {
         drawPath(context, rover, trace, colorTrace);

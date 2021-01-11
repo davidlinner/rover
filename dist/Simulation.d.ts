@@ -1,4 +1,4 @@
-import { Location, SimulationOptions } from "./types";
+import { Location, SimulationOptions } from './types';
 declare class Simulation {
     private readonly context;
     private world;

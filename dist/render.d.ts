@@ -1,4 +1,4 @@
-import { RenderingOptions } from "./types";
+import { RenderingOptions } from './types';
 export declare type Point = [number, number];
 export interface Marker {
     label: string;

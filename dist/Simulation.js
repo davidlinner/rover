@@ -9,7 +9,7 @@ const latlon_spherical_js_1 = __importDefault(require("geodesy/latlon-spherical.
 const render_1 = __importDefault(require("./render"));
 const tools_1 = require("./tools");
 const Authenticity_1 = require("./Authenticity");
-const ROVER_WIDTH = .5;
+const ROVER_WIDTH = 0.5;
 const ROVER_HEIGHT = 1.0;
 const MIN_TRACKING_POINT_DISTANCE = 1;
 const MAX_SUB_STEPS = 5;
@@ -18,24 +18,24 @@ const CONTROL_INTERVAL = 20;
 const BASE_ENGINE_FORCE = 1.0;
 const INITIAL_WHEEL_CONSTRAINTS = [
     {
-        localPosition: [.25, 0],
+        localPosition: [0.25, 0],
         brakeForce: 0.5,
-        sideFriction: 3.0
+        sideFriction: 3.0,
     },
     {
-        localPosition: [-.25, 0],
+        localPosition: [-0.25, 0],
         brakeForce: 0.5,
-        sideFriction: 3.0
+        sideFriction: 3.0,
     },
     {
         localPosition: [0, 0.25],
         brakeForce: 0,
-        sideFriction: .075
+        sideFriction: 0.075,
     },
     {
         localPosition: [0, -0.25],
         brakeForce: 0,
-        sideFriction: .075
+        sideFriction: 0.075,
     },
 ];
 class Simulation {
@@ -58,10 +58,10 @@ class Simulation {
                 position: this.rover.interpolatedPosition,
                 angle: this.rover.angle,
                 width: ROVER_WIDTH,
-                height: ROVER_HEIGHT
+                height: ROVER_HEIGHT,
             }, this.trace, this.markers, this.renderingOptions);
         };
-        const { loop, element, renderingOptions = {}, physicalConstraints = Authenticity_1.AUTHENTICITY_LEVEL0, locationsOfInterest = [], origin } = simulationOptions;
+        const { loop, element, renderingOptions = {}, physicalConstraints = Authenticity_1.AUTHENTICITY_LEVEL0, locationsOfInterest = [], origin, } = simulationOptions;
         const { height = 500, width = 500 } = renderingOptions;
         this.loop = loop;
         const canvas = this.createCanvas(element, width, height);
@@ -71,7 +71,7 @@ class Simulation {
         }
         this.initMarkers(locationsOfInterest, origin);
         const world = new p2_1.default.World({
-            gravity: [0, 0]
+            gravity: [0, 0],
         });
         const rover = new p2_1.default.Body({ mass: 1 });
         rover.addShape(new p2_1.default.Box({ width: ROVER_WIDTH, height: ROVER_HEIGHT }));
@@ -110,7 +110,7 @@ class Simulation {
                 const y = markerLatLon.distanceTo(new latlon_spherical_js_1.default(origin.latitude, longitude));
                 return {
                     position: [x, y],
-                    label
+                    label,
                 };
             });
             console.log(this.markers);
@@ -122,16 +122,16 @@ class Simulation {
             heading += 2 * Math.PI;
         }
         const trueHeading = (180 / Math.PI) * heading;
-        const { errorHeading = d => d } = this.physicalOptions;
+        const { errorHeading = (d) => d } = this.physicalOptions;
         return errorHeading(trueHeading);
     }
     getRoverLocation() {
         const [x, y] = this.rover.interpolatedPosition;
         const trueLocation = {
             longitude: this.offset.destinationPoint(Math.abs(x), x <= 0 ? 270 : 90).longitude,
-            latitude: this.offset.destinationPoint(Math.abs(y), y <= 0 ? 180 : 0).latitude
+            latitude: this.offset.destinationPoint(Math.abs(y), y <= 0 ? 180 : 0).latitude,
         };
-        const { errorLocation = location => location } = this.physicalOptions;
+        const { errorLocation = (location) => location } = this.physicalOptions;
         return errorLocation(trueLocation);
     }
     start() {
@@ -146,7 +146,7 @@ class Simulation {
                 location: this.getRoverLocation(),
                 clock,
             }, {
-                engines: this.engines
+                engines: this.engines,
             });
             const { engines } = actuatorValues;
             const { errorEngine = [] } = this.physicalOptions;
@@ -154,7 +154,7 @@ class Simulation {
                 for (let i = 0; i < engines.length; i++) {
                     if (engines[i] <= 1.0 && engines[i] >= -1.0) {
                         this.engines[i] = engines[i];
-                        const errorFunction = errorEngine[i] || (v => v);
+                        const errorFunction = errorEngine[i] || ((v) => v);
                         this.wheelConstraints[i].engineForce = BASE_ENGINE_FORCE * errorFunction(engines[i]);
                     }
                     else {

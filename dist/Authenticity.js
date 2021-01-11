@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AUTHENTICITY_LEVEL2 = exports.AUTHENTICITY_LEVEL1 = exports.AUTHENTICITY_LEVEL0 = void 0;
 const latlon_spherical_js_1 = __importDefault(require("geodesy/latlon-spherical.js"));
+const utils_1 = require("./utils");
 function AUTHENTICITY_LEVEL0(vehicleOptions) {
     const engineCount = (vehicleOptions === null || vehicleOptions === void 0 ? void 0 : vehicleOptions.engineCount) || 2;
     const errorHeading = (heading) => heading;
@@ -48,9 +49,12 @@ function AUTHENTICITY_LEVEL2(vehicleOptions) {
     const maxHeadingError = 5;
     const maxEngineError = 0.01;
     const maxLocationError = 5;
-    const errorHeading = (heading) => (360 + heading + maxHeadingError * (Math.random() * 2 - 1)) % 360;
+    const errorHeading = (heading) => {
+        const staticHeadingError = utils_1.randn_bm(-maxHeadingError, maxHeadingError);
+        return (360 + heading + staticHeadingError) % 360;
+    };
     const errorEngine = Array.from({ length: engineCount }, () => {
-        const staticEngineError = maxEngineError * (Math.random() * 2 - 1);
+        const staticEngineError = utils_1.randn_bm(-maxEngineError, maxEngineError);
         return (value) => value + staticEngineError;
     });
     const errorLocation = (location) => {

@@ -92,6 +92,7 @@
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-function"><a href="index.html#authenticity_level0" class="tsd-kind-icon">AUTHENTICITY_<wbr>LEVEL0</a></li>
 								<li class="tsd-kind-function"><a href="index.html#authenticity_level1" class="tsd-kind-icon">AUTHENTICITY_<wbr>LEVEL1</a></li>
+								<li class="tsd-kind-function"><a href="index.html#authenticity_level2" class="tsd-kind-icon">AUTHENTICITY_<wbr>LEVEL2</a></li>
 							</ul>
 						</section>
 					</div>
@@ -105,7 +106,7 @@
 					<div class="tsd-signature tsd-kind-icon">Control<wbr>Loop<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>sensors<span class="tsd-signature-symbol">: </span><a href="interfaces/sensorvalues.html" class="tsd-signature-type" data-tsd-kind="Interface">SensorValues</a>, actuators<span class="tsd-signature-symbol">: </span><a href="interfaces/actuatorvalues.html" class="tsd-signature-type" data-tsd-kind="Interface">ActuatorValues</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><a href="interfaces/actuatorvalues.html" class="tsd-signature-type" data-tsd-kind="Interface">ActuatorValues</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/davidlinner/rover/blob/b4461c2/src/types.ts#L143">types.ts:143</a></li>
+							<li>Defined in <a href="https://github.com/marcelxpfeifer/rover/blob/5a91e12/src/types.ts#L141">types.ts:141</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -144,7 +145,7 @@
 					<div class="tsd-signature tsd-kind-icon">Physical<wbr>Constraints<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>vehicle<span class="tsd-signature-symbol">: </span><a href="interfaces/vehicleoptions.html" class="tsd-signature-type" data-tsd-kind="Interface">VehicleOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><a href="interfaces/physicaloptions.html" class="tsd-signature-type" data-tsd-kind="Interface">PhysicalOptions</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/davidlinner/rover/blob/b4461c2/src/types.ts#L138">types.ts:138</a></li>
+							<li>Defined in <a href="https://github.com/marcelxpfeifer/rover/blob/5a91e12/src/types.ts#L136">types.ts:136</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -187,7 +188,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/davidlinner/rover/blob/b4461c2/src/Authenticity.ts#L9">Authenticity.ts:9</a></li>
+									<li>Defined in <a href="https://github.com/marcelxpfeifer/rover/blob/5a91e12/src/Authenticity.ts#L9">Authenticity.ts:9</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -218,7 +219,43 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/davidlinner/rover/blob/b4461c2/src/Authenticity.ts#L30">Authenticity.ts:30</a></li>
+									<li>Defined in <a href="https://github.com/marcelxpfeifer/rover/blob/5a91e12/src/Authenticity.ts#L30">Authenticity.ts:30</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Creates physical options with the following properties:</p>
+									<ul>
+										<li>heading has a dynamic, random error of -3° &lt;= x &lt;= 3°</li>
+										<li>engines have a random static error of -0.05 &lt;= v &lt;= 0.05</li>
+										<li>location is a random error of max. 1.5m in random direction</li>
+									</ul>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> vehicleOptions: <a href="interfaces/vehicleoptions.html" class="tsd-signature-type" data-tsd-kind="Interface">VehicleOptions</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The vehicle options to prepare physical options for</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="interfaces/physicaloptions.html" class="tsd-signature-type" data-tsd-kind="Interface">PhysicalOptions</a></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-function">
+					<a name="authenticity_level2" class="tsd-anchor"></a>
+					<h3>AUTHENTICITY_<wbr>LEVEL2</h3>
+					<ul class="tsd-signatures tsd-kind-function">
+						<li class="tsd-signature tsd-kind-icon">AUTHENTICITY_<wbr>LEVEL2<span class="tsd-signature-symbol">(</span>vehicleOptions<span class="tsd-signature-symbol">?: </span><a href="interfaces/vehicleoptions.html" class="tsd-signature-type" data-tsd-kind="Interface">VehicleOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="interfaces/physicaloptions.html" class="tsd-signature-type" data-tsd-kind="Interface">PhysicalOptions</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/marcelxpfeifer/rover/blob/5a91e12/src/Authenticity.ts#L70">Authenticity.ts:70</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -294,6 +331,9 @@
 					</li>
 					<li class=" tsd-kind-function">
 						<a href="index.html#authenticity_level1" class="tsd-kind-icon">AUTHENTICITY_<wbr>LEVEL1</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="index.html#authenticity_level2" class="tsd-kind-icon">AUTHENTICITY_<wbr>LEVEL2</a>
 					</li>
 				</ul>
 			</nav>
