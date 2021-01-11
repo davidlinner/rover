@@ -102,8 +102,6 @@ class Simulation {
     private interval: number | null = null
     private animationFrame: number | null = null
 
-    debug: Record<string, string> = {}
-
     /**
      * Initializes a new simulation an starts the visualization without starting the control loop.
      *
@@ -258,14 +256,11 @@ class Simulation {
 
             const {
                 engines,
-                debug,
             } = actuatorValues;
 
             const {
                 errorEngine = []
             } = this.physicalOptions;
-
-            this.debug = debug || {};
 
             if (engines.length === this.engines.length) {
                 for(let i = 0; i < engines.length; i++){
@@ -337,7 +332,6 @@ class Simulation {
             this.trace,
             this.markers,
             this.renderingOptions,
-            this.debug,
         );
     }
 }

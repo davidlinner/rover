@@ -23,7 +23,6 @@ export interface SensorValues {
 }
 export interface ActuatorValues {
     engines: Array<number>;
-    debug?: Record<string, string>;
 }
 declare type EngineError = (value: number) => number;
 declare type LocationError = (location: Location) => Location;

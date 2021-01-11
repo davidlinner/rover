@@ -15,7 +15,6 @@ declare class Simulation {
     private startTime;
     private interval;
     private animationFrame;
-    debug: Record<string, string>;
     constructor(simulationOptions: SimulationOptions);
     private createCanvas;
     private initMarkers;

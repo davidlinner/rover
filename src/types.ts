@@ -91,11 +91,6 @@ export interface ActuatorValues {
      * be in the range [-1.0 : 1.0], where 0 means the vehicle is at rest.
      */
     engines: Array<number>
-
-    /**
-     * Values that will be displayed in top left corner.
-     */
-    debug?: Record<string, string>
 }
 
 /**

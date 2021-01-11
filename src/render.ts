@@ -27,19 +27,6 @@ function drawRover(context: CanvasRenderingContext2D, {width, height}: Rover, co
     context.restore();
 }
 
-function drawDebugValues(context: CanvasRenderingContext2D, debugValues: Record<string, string>){
-    context.save();
-
-    // Draw debug values to top left corner
-    context.font = '12px monospace';
-    context.fillStyle = 'white';
-    Object.entries(debugValues).forEach(([key, value], index) => {
-        context.fillText(`${key}: ${value}`, 10, 15 + (index * 14))
-    })
-
-    context.restore();
-}
-
 function drawPath(context: CanvasRenderingContext2D, {position, angle}: Rover, trace: Array<Point>, color: string) {
     if(trace.length < 1) return;
 
@@ -163,7 +150,6 @@ export default function render(
     trace: Array<Point>,
     markers: Array<Marker>,
     options: RenderingOptions,
-    debug: Record<string, string>,
 ) {
 
     const {
@@ -222,6 +208,4 @@ export default function render(
     if (showCompass) {
         drawCompass(context, rover, radius, colorCompass);
     }
-
-    drawDebugValues(context, debug);
 }

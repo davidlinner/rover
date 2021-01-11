@@ -47,7 +47,6 @@ class Simulation {
         this.startTime = 0;
         this.interval = null;
         this.animationFrame = null;
-        this.debug = {};
         this.animate = (time) => {
             this.animationFrame = requestAnimationFrame(this.animate);
             let deltaTime = this.lastRenderTime ? (time - this.lastRenderTime) / 1000 : 0;
@@ -60,7 +59,7 @@ class Simulation {
                 angle: this.rover.angle,
                 width: ROVER_WIDTH,
                 height: ROVER_HEIGHT
-            }, this.trace, this.markers, this.renderingOptions, this.debug);
+            }, this.trace, this.markers, this.renderingOptions);
         };
         const { loop, element, renderingOptions = {}, physicalConstraints = Authenticity_1.AUTHENTICITY_LEVEL0, locationsOfInterest = [], origin } = simulationOptions;
         const { height = 500, width = 500 } = renderingOptions;
@@ -149,9 +148,8 @@ class Simulation {
             }, {
                 engines: this.engines
             });
-            const { engines, debug, } = actuatorValues;
+            const { engines, } = actuatorValues;
             const { errorEngine = [] } = this.physicalOptions;
-            this.debug = debug || {};
             if (engines.length === this.engines.length) {
                 for (let i = 0; i < engines.length; i++) {
                     if (engines[i] <= 1.0 && engines[i] >= -1.0) {
