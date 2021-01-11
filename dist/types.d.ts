@@ -3,7 +3,12 @@ export interface SimulationOptions {
     origin: Location;
     locationsOfInterest: Array<LocationOfInterest>;
     renderingOptions: RenderingOptions;
+    physicalConstraints?: PhysicalConstraints;
+    vehicleOptions?: VehicleOptions;
     element: HTMLElement;
+}
+export interface VehicleOptions {
+    readonly engineCount: number;
 }
 export interface Location {
     latitude: number;
@@ -21,6 +26,15 @@ export interface ActuatorValues {
     engines: Array<number>;
     debug?: Record<string, string>;
 }
+declare type EngineError = (value: number) => number;
+declare type LocationError = (location: Location) => Location;
+declare type HeadingError = (value: number) => number;
+export interface PhysicalOptions {
+    readonly errorEngine?: Array<EngineError>;
+    readonly errorLocation?: LocationError;
+    readonly errorHeading?: HeadingError;
+}
+export declare type PhysicalConstraints = (vehicle: VehicleOptions) => PhysicalOptions;
 export declare type ControlLoop = (sensors: SensorValues, actuators: ActuatorValues) => ActuatorValues;
 export interface RenderingOptions {
     width?: number;
@@ -34,3 +48,4 @@ export interface RenderingOptions {
     colorMarker?: string;
     colorCompass?: string;
 }
+export {};

@@ -43,17 +43,20 @@ function drawMarkers(context, { position, angle }, markers, color) {
     context.save();
     context.rotate(angle);
     context.scale(1, -1);
+    context.font = "2px SansSerif";
+    context.fillStyle = "purple";
+    context.textAlign = "center";
     for (let marker of markers) {
-        const { position: [x, y], label = 'X' } = marker;
-        context.font = "2px SansSerif";
-        context.fillStyle = "purple";
-        context.textAlign = "center";
+        const { position = [0, 0], label = 'X' } = marker;
+        const [x, y] = position;
+        context.save();
         context.translate(baseX - x, baseY - y);
         context.rotate(angle);
         context.fillText(label, 0, -1);
         context.beginPath();
         context.arc(0, 0, .25, 0, Math.PI * 2);
         context.fill();
+        context.restore();
     }
     context.restore();
 }

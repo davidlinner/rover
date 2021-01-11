@@ -10,6 +10,7 @@ declare class Simulation {
     private trace;
     private markers;
     private readonly renderingOptions;
+    private readonly physicalOptions;
     private lastRenderTime;
     private startTime;
     private interval;

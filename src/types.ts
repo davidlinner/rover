@@ -23,9 +23,26 @@ export interface SimulationOptions {
     renderingOptions: RenderingOptions
 
     /**
+     * Additional options like measurement errors to create more authenticity on the simulation.
+     */
+    physicalConstraints?: PhysicalConstraints
+
+    /**
+     * Basic vehicle settings to apply in the simulation.
+     */
+    vehicleOptions?: VehicleOptions
+
+    /**
      * Parent element the generated canvas should be added to.
      */
     element: HTMLElement
+}
+
+/**
+ * Basic vehicle options
+ */
+export interface VehicleOptions {
+    readonly engineCount: number
 }
 
 /**
@@ -85,6 +102,50 @@ export interface ActuatorValues {
      */
     debug?: Record<string, string>
 }
+
+/**
+ * Add bias to an engine value.
+ * Must return a value x with -1.0 => x <= 1.0.
+ */
+type EngineError = (value: number) => number
+
+/**
+ * Add bias to a location value.
+ */
+type LocationError = (location: Location) => Location
+
+/**
+ * Add bias to a heading value.
+ * Must return a value a with  360 > x <= 0.
+ */
+type HeadingError = (value: number) => number
+
+/**
+ * Collection of options to create more authenticity.
+ */
+export interface PhysicalOptions {
+
+    /**
+     * Use to meme derivations when engine forces are applied to the ground, like
+     * hanging wheels. One function per engine.
+     */
+    readonly errorEngine?: Array<EngineError>
+
+    /**
+     * Use to add noise to the location provided by the location sensor.
+     */
+    readonly errorLocation?: LocationError
+
+    /**
+     * Use to add an error to the heading sensor value
+     */
+    readonly errorHeading? : HeadingError
+}
+
+/**
+ * Factory to create physical properties based in vehicle options
+ */
+export type PhysicalConstraints = (vehicle: VehicleOptions) => PhysicalOptions
 
 /**
  * Signature of the loop function.
