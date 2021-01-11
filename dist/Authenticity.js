@@ -19,10 +19,10 @@ function AUTHENTICITY_LEVEL0(vehicleOptions) {
 exports.AUTHENTICITY_LEVEL0 = AUTHENTICITY_LEVEL0;
 function AUTHENTICITY_LEVEL1(vehicleOptions) {
     const engineCount = (vehicleOptions === null || vehicleOptions === void 0 ? void 0 : vehicleOptions.engineCount) || 2;
-    const maxHeadingError = 3;
+    const maxHeadingError = 5;
     const maxEngineError = 0.01;
-    const maxLocationError = 1.5;
-    const errorHeading = (heading) => maxHeadingError * (Math.random() * 2 - 1) + heading;
+    const maxLocationError = 5;
+    const errorHeading = (heading) => (360 + heading + maxHeadingError * (Math.random() * 2 - 1)) % 360;
     const errorEngine = Array.from({ length: engineCount }, () => {
         const staticEngineError = maxEngineError * (Math.random() * 2 - 1);
         return (value) => value + staticEngineError;

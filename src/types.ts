@@ -28,11 +28,6 @@ export interface SimulationOptions {
     physicalConstraints?: PhysicalConstraints
 
     /**
-     * Basic vehicle settings to apply in the simulation.
-     */
-    vehicleOptions?: VehicleOptions
-
-    /**
      * Parent element the generated canvas should be added to.
      */
     element: HTMLElement

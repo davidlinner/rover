@@ -15,21 +15,32 @@ const MIN_TRACKING_POINT_DISTANCE = 1;
 const MAX_SUB_STEPS = 5;
 const FIXED_DELTA_TIME = 1 / 60;
 const CONTROL_INTERVAL = 20;
-const BASE_ENGINE_FORCE = 2.0;
+const BASE_ENGINE_FORCE = 1.0;
 const INITIAL_WHEEL_CONSTRAINTS = [
     {
-        localPosition: [.01, 0],
-        brakeForce: 1.0,
+        localPosition: [.25, 0],
+        brakeForce: 0.5,
         sideFriction: 3.0
-    }, {
-        localPosition: [-.01, 0],
-        brakeForce: 1.0,
+    },
+    {
+        localPosition: [-.25, 0],
+        brakeForce: 0.5,
         sideFriction: 3.0
-    }
+    },
+    {
+        localPosition: [0, 0.25],
+        brakeForce: 0,
+        sideFriction: .075
+    },
+    {
+        localPosition: [0, -0.25],
+        brakeForce: 0,
+        sideFriction: .075
+    },
 ];
 class Simulation {
     constructor(simulationOptions) {
-        this.engines = INITIAL_WHEEL_CONSTRAINTS.map(() => 0);
+        this.engines = [0, 0];
         this.trace = [];
         this.markers = [];
         this.lastRenderTime = 0;
@@ -51,7 +62,7 @@ class Simulation {
                 height: ROVER_HEIGHT
             }, this.trace, this.markers, this.renderingOptions, this.debug);
         };
-        const { loop, element, renderingOptions = {}, vehicleOptions = { engineCount: 2 }, physicalConstraints = Authenticity_1.AUTHENTICITY_LEVEL0, locationsOfInterest = [], origin } = simulationOptions;
+        const { loop, element, renderingOptions = {}, physicalConstraints = Authenticity_1.AUTHENTICITY_LEVEL0, locationsOfInterest = [], origin } = simulationOptions;
         const { height = 500, width = 500 } = renderingOptions;
         this.loop = loop;
         const canvas = this.createCanvas(element, width, height);
@@ -80,7 +91,7 @@ class Simulation {
         this.context = context;
         this.renderingOptions = Object.assign(Object.assign({}, renderingOptions), { width,
             height });
-        this.physicalOptions = physicalConstraints(vehicleOptions);
+        this.physicalOptions = physicalConstraints({ engineCount: 2 });
         this.offset = new latlon_spherical_js_1.default(origin.latitude, origin.longitude);
     }
     createCanvas(parent, width, height) {
@@ -149,7 +160,7 @@ class Simulation {
                         this.wheelConstraints[i].engineForce = BASE_ENGINE_FORCE * errorFunction(engines[i]);
                     }
                     else {
-                        console.log('Wheel power out of range [-1.0 : 1.0]');
+                        console.error('Wheel power out of range [-1.0 : 1.0]');
                     }
                 }
             }

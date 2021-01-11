@@ -4,7 +4,6 @@ export interface SimulationOptions {
     locationsOfInterest: Array<LocationOfInterest>;
     renderingOptions: RenderingOptions;
     physicalConstraints?: PhysicalConstraints;
-    vehicleOptions?: VehicleOptions;
     element: HTMLElement;
 }
 export interface VehicleOptions {
