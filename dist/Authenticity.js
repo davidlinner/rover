@@ -60,7 +60,7 @@ function AUTHENTICITY_LEVEL2(vehicleOptions) {
     const errorLocation = (location) => {
         const { latitude, longitude } = location;
         const l0 = new latlon_spherical_js_1.default(latitude, longitude);
-        const l1 = l0.destinationPoint(Math.random() * maxLocationError, Math.random() * 359.999);
+        const l1 = l0.destinationPoint(utils_1.randn_bm(-maxLocationError, maxLocationError), Math.random() * 359.999);
         return {
             latitude: l1.latitude,
             longitude: l1.longitude,
