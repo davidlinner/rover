@@ -1,6 +1,7 @@
 /**
  * Options for the simulation.
  */
+
 export interface SimulationOptions {
     /**
      * Main control loop, called in fixed intervals.
@@ -16,6 +17,11 @@ export interface SimulationOptions {
      * Points which should visualized statically. Mainly intended for debugging/demos.
      */
     locationsOfInterest: Array<LocationOfInterest>
+
+    /**
+     * Obstacle circles.
+     */
+    obstacles: Array<{ latitude: number, longitude: number, radius: number }>
 
     /**
      * Additional options for the visualization.

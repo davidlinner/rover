@@ -2,6 +2,11 @@ export interface SimulationOptions {
     loop: ControlLoop;
     origin: Location;
     locationsOfInterest: Array<LocationOfInterest>;
+    obstacles: Array<{
+        latitude: number;
+        longitude: number;
+        radius: number;
+    }>;
     renderingOptions: RenderingOptions;
     physicalConstraints?: PhysicalConstraints;
     element: HTMLElement;

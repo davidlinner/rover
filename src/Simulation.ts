@@ -1,7 +1,7 @@
 import p2 from 'p2';
 import LatLon from 'geodesy/latlon-spherical.js'
 
-import render, {Marker, Point} from "./render";
+import render, {Marker, Obstacle, Point} from "./render";
 import {distance} from "./tools";
 import {
     ControlLoop,
@@ -77,6 +77,7 @@ const INITIAL_WHEEL_CONSTRAINTS: Array<{ localPosition: [number, number], brakeF
  * ```
  *
  */
+
 class Simulation {
 
     private readonly context: CanvasRenderingContext2D
@@ -93,6 +94,7 @@ class Simulation {
 
     private trace: Array<Point> = []
     private markers: Array<Marker> = []
+    private obstacles: Array<Obstacle> = []
 
     private readonly renderingOptions: RenderingOptions;
     private readonly physicalOptions: PhysicalOptions;
@@ -115,7 +117,8 @@ class Simulation {
             renderingOptions = {},
             physicalConstraints = AUTHENTICITY_LEVEL0,
             locationsOfInterest = [],
-            origin
+            obstacles = [],
+            origin,
         } = simulationOptions;
 
         const {
@@ -133,7 +136,6 @@ class Simulation {
         }
 
         this.initMarkers(locationsOfInterest, origin);
-
         // Init P2 physics engine
         const world = new p2.World({
             gravity: [0, 0]
@@ -169,6 +171,8 @@ class Simulation {
         this.physicalOptions = physicalConstraints({engineCount:2}); // constant for the moment
 
         this.offset = new LatLon(origin.latitude, origin.longitude);
+
+        this.initObstacles(origin, obstacles);
     }
 
     private createCanvas(parent: HTMLElement, width: number, height: number): HTMLCanvasElement {
@@ -181,7 +185,6 @@ class Simulation {
     }
 
     private initMarkers(locationsOfInterest: Array<LocationOfInterest>, origin: Location) {
-        console.log('lois', locationsOfInterest);
         if (origin) {
             this.markers = locationsOfInterest.map(({label, latitude, longitude}) => {
                 const markerLatLon = new LatLon(latitude, longitude);
@@ -194,7 +197,37 @@ class Simulation {
                     label
                 }
             })
-            console.log(this.markers);
+        }
+    }
+
+    private initObstacles(origin: Location, obstacles: Array<{ latitude: number, longitude: number, radius: number }>) {
+        if (origin) {
+            this.obstacles = obstacles.map(({radius, latitude, longitude}) => {
+                const obstacleLatLon = new LatLon(latitude, longitude);
+
+                const x = obstacleLatLon.distanceTo(new LatLon(latitude, origin.longitude));
+                const y = obstacleLatLon.distanceTo(new LatLon(origin.latitude, longitude));
+
+                const obstacleShape = new p2.Circle({radius})
+                const obstacleBody = new p2.Body({
+                    mass: 0, // static
+                    position: [x, y],
+                    angle: 0,
+                    angularVelocity: 0,
+                    fixedX: true,
+                    fixedY: true,
+                    fixedRotation: true,
+                    collisionResponse: true,
+                });
+                obstacleBody.addShape(obstacleShape);
+
+                this.world.addBody(obstacleBody)
+
+                return {
+                    position: [x, y],
+                    radius,
+                }
+            })
         }
     }
 
@@ -323,6 +356,7 @@ class Simulation {
         // Render scene
         render(
             this.context,
+            this.world,
             {
                 position: this.rover.interpolatedPosition,
                 angle: this.rover.angle,
@@ -331,7 +365,9 @@ class Simulation {
             },
             this.trace,
             this.markers,
-            this.renderingOptions);
+            this.obstacles,
+            this.renderingOptions,
+        );
     }
 }
 

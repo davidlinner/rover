@@ -1,5 +1,9 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
+const p2_1 = __importDefault(require("p2"));
 const SCALE = 15;
 const GRID_GUTTER = 3;
 function drawRover(context, { width, height }, color) {
@@ -51,6 +55,61 @@ function drawMarkers(context, { position, angle }, markers, color) {
     }
     context.restore();
 }
+function drawObstacles(context, { position, angle }, obstacles) {
+    const [baseX, baseY] = position;
+    context.save();
+    context.translate(context.canvas.width / 2, context.canvas.height / 2);
+    context.scale(SCALE, SCALE);
+    context.rotate(-angle);
+    context.fillStyle = 'rgba(255, 0, 0, 0.2)';
+    context.strokeStyle = 'rgba(255, 0, 0, 1)';
+    context.lineWidth = 0.1;
+    for (const obstacle of obstacles) {
+        const { position, radius } = obstacle;
+        const [x, y] = position;
+        context.save();
+        context.translate(baseX - x, baseY - y);
+        context.beginPath();
+        context.arc(0, 0, radius, 0, Math.PI * 2);
+        context.fill();
+        context.stroke();
+        context.restore();
+    }
+    context.restore();
+}
+function drawObstacleRays(context, { position, angle }, world, obstacles) {
+    const [baseX, baseY] = position;
+    context.save();
+    let amount = 180;
+    for (let index = 0; index < amount; index++) {
+        context.save();
+        const distance = 10;
+        const directionAngleInRadiant = ((Math.PI * 2) / amount) * index;
+        const xx = baseX + (distance * Math.cos(directionAngleInRadiant + Math.PI / 2));
+        const yy = baseY + (distance * Math.sin(directionAngleInRadiant + Math.PI / 2));
+        const to = [xx, yy];
+        const ray = new p2_1.default.Ray({ from: position, to, mode: p2_1.default.Ray.CLOSEST, skipBackfaces: true });
+        const rayResult = new p2_1.default.RaycastResult();
+        let rayHit = p2_1.default.vec2.create();
+        rayResult.reset();
+        world.raycast(rayResult, ray);
+        let rayDistance = rayResult.getHitDistance(ray);
+        console.log(rayDistance);
+        context.translate(context.canvas.width / 2, context.canvas.height / 2);
+        if (rayDistance < 0) {
+            rayDistance = rayDistance * -1;
+        }
+        context.save();
+        context.rotate(-angle);
+        context.rotate(directionAngleInRadiant);
+        context.translate(0, -rayDistance * SCALE);
+        context.fillStyle = 'orange';
+        context.fillRect(-1, -1, 2, 2);
+        context.restore();
+        context.restore();
+    }
+    context.restore();
+}
 function drawCompass(context, { angle }, radius, color) {
     context.save();
     context.translate(context.canvas.width / 2, context.canvas.height / 2);
@@ -97,7 +156,7 @@ function drawGrid(context, { position, angle }, rasterSize, color) {
     context.stroke();
     context.restore();
 }
-function render(context, rover, trace, markers, options) {
+function render(context, world, rover, trace, markers, obstacles, options) {
     const { height = 500, width = 500, showGrid = true, showTrace = true, showCompass = true, colorTrace = 'blue', colorRover = 'red', colorMarker = 'purple', colorGrid = 'lightgreen', colorCompass = 'lime', } = options;
     context.fillStyle = "black";
     context.fillRect(0, 0, width, height);
@@ -122,6 +181,8 @@ function render(context, rover, trace, markers, options) {
     drawMarkers(context, rover, markers, colorMarker);
     drawRover(context, rover, colorRover);
     context.restore();
+    drawObstacles(context, rover, obstacles);
+    drawObstacleRays(context, rover, world, obstacles);
     if (showCompass) {
         drawCompass(context, rover, radius, colorCompass);
     }

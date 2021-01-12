@@ -43,6 +43,7 @@ class Simulation {
         this.engines = [0, 0];
         this.trace = [];
         this.markers = [];
+        this.obstacles = [];
         this.lastRenderTime = 0;
         this.startTime = 0;
         this.interval = null;
@@ -54,14 +55,14 @@ class Simulation {
             deltaTime = Math.min(1 / 10, deltaTime);
             this.world.step(FIXED_DELTA_TIME, deltaTime, MAX_SUB_STEPS);
             this.trackPosition();
-            render_1.default(this.context, {
+            render_1.default(this.context, this.world, {
                 position: this.rover.interpolatedPosition,
                 angle: this.rover.angle,
                 width: ROVER_WIDTH,
                 height: ROVER_HEIGHT
-            }, this.trace, this.markers, this.renderingOptions);
+            }, this.trace, this.markers, this.obstacles, this.renderingOptions);
         };
-        const { loop, element, renderingOptions = {}, physicalConstraints = Authenticity_1.AUTHENTICITY_LEVEL0, locationsOfInterest = [], origin } = simulationOptions;
+        const { loop, element, renderingOptions = {}, physicalConstraints = Authenticity_1.AUTHENTICITY_LEVEL0, locationsOfInterest = [], obstacles = [], origin, } = simulationOptions;
         const { height = 500, width = 500 } = renderingOptions;
         this.loop = loop;
         const canvas = this.createCanvas(element, width, height);
@@ -92,6 +93,7 @@ class Simulation {
             height });
         this.physicalOptions = physicalConstraints({ engineCount: 2 });
         this.offset = new latlon_spherical_js_1.default(origin.latitude, origin.longitude);
+        this.initObstacles(origin, obstacles);
     }
     createCanvas(parent, width, height) {
         const document = parent.ownerDocument;
@@ -102,7 +104,6 @@ class Simulation {
         return canvas;
     }
     initMarkers(locationsOfInterest, origin) {
-        console.log('lois', locationsOfInterest);
         if (origin) {
             this.markers = locationsOfInterest.map(({ label, latitude, longitude }) => {
                 const markerLatLon = new latlon_spherical_js_1.default(latitude, longitude);
@@ -113,7 +114,32 @@ class Simulation {
                     label
                 };
             });
-            console.log(this.markers);
+        }
+    }
+    initObstacles(origin, obstacles) {
+        if (origin) {
+            this.obstacles = obstacles.map(({ radius, latitude, longitude }) => {
+                const obstacleLatLon = new latlon_spherical_js_1.default(latitude, longitude);
+                const x = obstacleLatLon.distanceTo(new latlon_spherical_js_1.default(latitude, origin.longitude));
+                const y = obstacleLatLon.distanceTo(new latlon_spherical_js_1.default(origin.latitude, longitude));
+                const obstacleShape = new p2_1.default.Circle({ radius });
+                const obstacleBody = new p2_1.default.Body({
+                    mass: 0,
+                    position: [x, y],
+                    angle: 0,
+                    angularVelocity: 0,
+                    fixedX: true,
+                    fixedY: true,
+                    fixedRotation: true,
+                    collisionResponse: true,
+                });
+                obstacleBody.addShape(obstacleShape);
+                this.world.addBody(obstacleBody);
+                return {
+                    position: [x, y],
+                    radius,
+                };
+            });
         }
     }
     getRoverHeading() {
