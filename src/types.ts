@@ -21,7 +21,7 @@ export interface SimulationOptions {
     /**
      * Obstacle circles.
      */
-    obstacles: Array<{ latitude: number, longitude: number, radius: number }>
+    obstacles?: Array<{ latitude: number, longitude: number, radius: number }>
 
     /**
      * Additional options for the visualization.

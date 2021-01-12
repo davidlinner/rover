@@ -2,7 +2,7 @@ export interface SimulationOptions {
     loop: ControlLoop;
     origin: Location;
     locationsOfInterest: Array<LocationOfInterest>;
-    obstacles: Array<{
+    obstacles?: Array<{
         latitude: number;
         longitude: number;
         radius: number;
