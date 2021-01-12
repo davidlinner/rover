@@ -76,10 +76,16 @@ export interface SensorValues {
      * Current position of the vehicle (measured from center of the vehicle).
      */
     location: Location,
+
     /**
      * Heading of the vehicle in degree [0 - 359.9...] where north is 0°, east is 90° ...
      */
     heading: number,
+
+    /**
+     * 360° distance values to obstacles in clockwise order ...
+     */
+    proximity: Array<number>,
 
     /**
      * Time in milliseconds since the control loop with run the first time.

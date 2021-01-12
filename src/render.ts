@@ -1,5 +1,5 @@
 import {RenderingOptions} from "./types";
-import p2, {World} from "p2";
+import {MAX_PROXIMITY_DISTANCE} from "./Simulation";
 
 const SCALE = 15;
 const GRID_GUTTER = 3;
@@ -118,43 +118,26 @@ function drawObstacles(context: CanvasRenderingContext2D, {position, angle}: Rov
     context.restore()
 }
 
-function drawObstacleRays(context: CanvasRenderingContext2D, {position, angle}: Rover, world: World) {
-    const [baseX, baseY] = position;
-
+function drawObstacleRays(context: CanvasRenderingContext2D, proximityValues: number[]) {
     context.save()
+    context.translate(context.canvas.width / 2, context.canvas.height / 2);
 
-    let amount = 180;
+    for (let i = 0; i < proximityValues.length; i++) {
+        const distance = proximityValues[i];
 
-    for (let index = 0; index < amount; index++) {
-        context.save();
-
-        const distance = 10;
-        const directionAngleInRadiant = ((Math.PI * 2) / amount) * index;
-
-        const xx = baseX + (distance * Math.cos(directionAngleInRadiant + Math.PI / 2))
-        const yy = baseY + (distance * Math.sin(directionAngleInRadiant + Math.PI / 2))
-
-        const to: [number, number] = [xx, yy];
-
-        const ray = new p2.Ray({from: position, to, mode: p2.Ray.CLOSEST, skipBackfaces: true});
-        const rayResult = new p2.RaycastResult();
-        rayResult.reset();
-        world.raycast(rayResult, ray);
-        let rayDistance = rayResult.getHitDistance(ray)
-        console.log(rayDistance)
-        context.translate(context.canvas.width / 2, context.canvas.height / 2);
-
-        if (rayDistance < 0) {
-            rayDistance = rayDistance * -1;
-        }
+        const directionAngleInRadiant = ((Math.PI * 2) / proximityValues.length) * i;
 
         context.save();
-        context.rotate(-angle);
         context.rotate(directionAngleInRadiant);
-        context.translate(0, -rayDistance * SCALE);
-        context.fillStyle = 'orange';
-        context.fillRect(-1, -1, 2, 2);
-        context.restore();
+        context.translate(0, -distance * SCALE);
+
+        if (Math.floor(distance + 0.001) === MAX_PROXIMITY_DISTANCE) {
+            context.fillStyle = 'darkorange';
+            context.fillRect(-0.5, -0.5, 1, 1);
+        } else {
+            context.fillStyle = 'orange';
+            context.fillRect(-1, -1, 2, 2);
+        }
 
         context.restore();
     }
@@ -224,11 +207,11 @@ function drawGrid(context: CanvasRenderingContext2D, {position, angle}: Rover, r
 
 export default function render(
     context: CanvasRenderingContext2D,
-    world: World,
     rover: Rover,
     trace: Array<Point>,
     markers: Array<Marker>,
     obstacles: Array<Obstacle>,
+    proximityValues: Array<number>,
     options: RenderingOptions,
 ) {
 
@@ -284,8 +267,8 @@ export default function render(
 
     // Restore transform
     context.restore();
-    drawObstacles(context, rover, obstacles)
-    drawObstacleRays(context, rover, world);
+    drawObstacles(context, rover, obstacles);
+    drawObstacleRays(context, proximityValues);
 
     if (showCompass) {
         drawCompass(context, rover, radius, colorCompass);

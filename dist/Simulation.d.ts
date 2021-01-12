@@ -1,4 +1,5 @@
 import { Location, SimulationOptions } from "./types";
+export declare const MAX_PROXIMITY_DISTANCE = 8;
 declare class Simulation {
     private readonly context;
     private world;
@@ -10,6 +11,7 @@ declare class Simulation {
     private trace;
     private markers;
     private obstacles;
+    private proximityValues;
     private readonly renderingOptions;
     private readonly physicalOptions;
     private lastRenderTime;
@@ -20,6 +22,7 @@ declare class Simulation {
     private createCanvas;
     private initMarkers;
     private initObstacles;
+    private updateProximityValues;
     getRoverHeading(): number;
     getRoverLocation(): Location;
     start(): void;

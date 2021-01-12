@@ -24,6 +24,7 @@ export interface LocationOfInterest extends Location {
 export interface SensorValues {
     location: Location;
     heading: number;
+    proximity: Array<number>;
     clock: number;
 }
 export interface ActuatorValues {
