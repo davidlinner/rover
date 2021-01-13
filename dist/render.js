@@ -2,14 +2,20 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const SCALE = 15;
 const GRID_GUTTER = 3;
-function drawRover(context, { width, height }, color) {
+function drawRover(context, { width, height, wheelConstraints }, color) {
     context.save();
-    context.beginPath();
     context.strokeStyle = color;
     context.lineWidth = 0.1;
-    context.rect(-width / 2, -height / 2, width, height);
-    context.stroke();
+    context.strokeRect(-width / 2, -height / 2, width, height);
     context.restore();
+    const [wheelWidth, wheelHeight] = [0.1, 0.15];
+    for (const { localPosition } of wheelConstraints) {
+        const [x, y] = localPosition;
+        context.save();
+        context.fillStyle = 'salmon';
+        context.fillRect(x - wheelWidth / 2, y - wheelHeight / 2, wheelWidth, wheelHeight);
+        context.restore();
+    }
 }
 function drawPath(context, { position, angle }, trace, color) {
     if (trace.length < 1)

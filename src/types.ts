@@ -90,7 +90,7 @@ export interface ActuatorValues {
      * Power values of all engines, left to right, top to bottom. Values have to
      * be in the range [-1.0 : 1.0], where 0 means the vehicle is at rest.
      */
-    engines: Array<number>
+    engines: [number, number] | [number, number, number, number, number, number]
 }
 
 /**
