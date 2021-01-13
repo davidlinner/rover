@@ -1,7 +1,7 @@
 import p2 from 'p2';
 import LatLon from 'geodesy/latlon-spherical.js'
 
-import render, {Marker, Point} from "./render";
+import render, {Marker, Obstacle, Point} from "./render";
 import {distance} from "./tools";
 import {
     ControlLoop,
@@ -16,6 +16,8 @@ const ROVER_WIDTH = .5;
 const ROVER_HEIGHT = 1.0;
 
 const MIN_TRACKING_POINT_DISTANCE = 1;
+
+export const MAX_PROXIMITY_DISTANCE = 8;
 
 const MAX_SUB_STEPS = 5; // Max physics ticks per render frame
 const FIXED_DELTA_TIME = 1 / 60; // Physics "tick" delta time
@@ -77,6 +79,7 @@ const INITIAL_WHEEL_CONSTRAINTS: Array<{ localPosition: [number, number], brakeF
  * ```
  *
  */
+
 class Simulation {
 
     readonly context: CanvasRenderingContext2D
@@ -93,6 +96,8 @@ class Simulation {
 
     private trace: Array<Point> = []
     private markers: Array<Marker> = []
+    private obstacles: Array<Obstacle> = []
+    private proximityValues: Array<number> = []
 
     private readonly renderingOptions: RenderingOptions;
     private readonly physicalOptions: PhysicalOptions;
@@ -115,7 +120,8 @@ class Simulation {
             renderingOptions = {},
             physicalConstraints = AUTHENTICITY_LEVEL0,
             locationsOfInterest = [],
-            origin
+            obstacles = [],
+            origin,
         } = simulationOptions;
 
         const {
@@ -133,7 +139,6 @@ class Simulation {
         }
 
         this.initMarkers(locationsOfInterest, origin);
-
         // Init P2 physics engine
         const world = new p2.World({
             gravity: [0, 0]
@@ -169,6 +174,9 @@ class Simulation {
         this.physicalOptions = physicalConstraints({engineCount:2}); // constant for the moment
 
         this.offset = new LatLon(origin.latitude, origin.longitude);
+
+        this.initObstacles(origin, obstacles);
+        this.updateProximityValues();
     }
 
     private createCanvas(parent: HTMLElement, width: number, height: number): HTMLCanvasElement {
@@ -181,7 +189,6 @@ class Simulation {
     }
 
     private initMarkers(locationsOfInterest: Array<LocationOfInterest>, origin: Location) {
-        console.log('lois', locationsOfInterest);
         if (origin) {
             this.markers = locationsOfInterest.map(({label, latitude, longitude}) => {
                 const markerLatLon = new LatLon(latitude, longitude);
@@ -194,7 +201,71 @@ class Simulation {
                     label
                 }
             })
-            console.log(this.markers);
+        }
+    }
+
+    private initObstacles(origin: Location, obstacles: Array<{ latitude: number, longitude: number, radius: number }>) {
+        if (origin) {
+            this.obstacles = obstacles.map(({radius, latitude, longitude}) => {
+                const obstacleLatLon = new LatLon(latitude, longitude);
+
+                const x = obstacleLatLon.distanceTo(new LatLon(latitude, origin.longitude));
+                const y = obstacleLatLon.distanceTo(new LatLon(origin.latitude, longitude));
+
+                const obstacleShape = new p2.Circle({radius})
+                const obstacleBody = new p2.Body({
+                    mass: 0, // static
+                    position: [x, y],
+                    angle: 0,
+                    angularVelocity: 0,
+                    fixedX: true,
+                    fixedY: true,
+                    fixedRotation: true,
+                    collisionResponse: true,
+                });
+                obstacleBody.addShape(obstacleShape);
+
+                this.world.addBody(obstacleBody)
+
+                return {
+                    position: [x, y],
+                    radius,
+                }
+            })
+        }
+    }
+
+    private updateProximityValues() {
+        const {
+            errorProximity = d => d
+        } = this.physicalOptions;
+
+        const position = this.rover.interpolatedPosition;
+        const [baseX, baseY] = position;
+
+        const resolution = 180;
+
+        for (let index = 0; index < resolution; index++) {
+            const directionAngleInRadiant = (((Math.PI * 2) / resolution) * index) + this.rover.interpolatedAngle;
+
+            const xx = baseX + (MAX_PROXIMITY_DISTANCE * Math.cos(directionAngleInRadiant + Math.PI / 2))
+            const yy = baseY + (MAX_PROXIMITY_DISTANCE * Math.sin(directionAngleInRadiant + Math.PI / 2))
+
+            const to: [number, number] = [xx, yy];
+
+            const ray = new p2.Ray({from: position, to, mode: p2.Ray.CLOSEST, skipBackfaces: true});
+            const rayResult = new p2.RaycastResult();
+
+            rayResult.reset();
+            // Possible improvement: Only traverse through obstacles
+            this.world.raycast(rayResult, ray);
+            let rayDistance = rayResult.getHitDistance(ray)
+
+            if (rayDistance < 0) {
+                rayDistance = rayDistance * -1;
+            }
+
+            this.proximityValues[index] = errorProximity(rayDistance);
         }
     }
 
@@ -209,7 +280,7 @@ class Simulation {
         const trueHeading =  (180 / Math.PI) * heading;
 
         const {
-            errorHeading = d=>d
+            errorHeading = d => d
         } = this.physicalOptions;
 
         return errorHeading(trueHeading);
@@ -246,9 +317,12 @@ class Simulation {
         this.interval = window.setInterval(() => {
 
             const clock = performance.now() - this.startTime;
+
+            this.updateProximityValues()
             const actuatorValues = this.loop({
                 heading: this.getRoverHeading(),
                 location: this.getRoverLocation(),
+                proximity: this.proximityValues,
                 clock,
             }, {
                 engines: this.engines
@@ -331,6 +405,8 @@ class Simulation {
             },
             this.trace,
             this.markers,
+            this.obstacles,
+            this.proximityValues,
             this.renderingOptions,
         );
     }
