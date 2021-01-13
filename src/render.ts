@@ -53,6 +53,9 @@ function drawMarkers(
 	context: CanvasRenderingContext2D,
 	{ position, angle }: Rover,
 	markers: Array<Marker>,
+	radius: number,
+	width: number,
+	height: number,
 	color: string
 ) {
 	if (markers.length < 1) return;
@@ -60,11 +63,12 @@ function drawMarkers(
 	const [baseX, baseY] = position;
 
 	context.save();
-	context.rotate(angle);
-	context.scale(1, -1);
+	context.translate(width / 2, height / 2); // Translate to the center
+	context.scale(SCALE, SCALE); // Zoom in and flip y axis
+	context.rotate(-angle);
 
-	context.font = '2px SansSerif';
-	context.fillStyle = 'purple';
+	context.font = '2px sans-serif';
+	context.fillStyle = color;
 	context.textAlign = 'center';
 
 	for (let marker of markers) {
@@ -72,10 +76,28 @@ function drawMarkers(
 
 		const [x, y] = position;
 
+		const deltaX = baseX - x;
+		const deltaY = baseY - y;
+
+		const theta = Math.atan2(deltaX, deltaY);
+		const distance = Math.hypot(deltaX, deltaY);
+
+		const maxDistance = (radius - 15) / SCALE;
+
 		context.save();
-		context.translate(baseX - x, baseY - y);
+
+		context.rotate(-theta);
+		context.translate(0, Math.min(distance, maxDistance));
+		context.rotate(theta);
 		context.rotate(angle);
-		context.fillText(label, 0, -1);
+
+		if (distance < maxDistance) {
+			const linearAlpha = Math.max(0, maxDistance - distance) / maxDistance;
+			context.globalAlpha = Math.min(linearAlpha * 8, 1);
+			context.fillText(label, 0, -1);
+			context.globalAlpha = 1;
+		}
+
 		context.beginPath();
 		context.arc(0, 0, 0.25, 0, Math.PI * 2);
 		context.fill();
@@ -160,7 +182,7 @@ export default function render(
 		showCompass = true,
 		colorTrace = 'blue',
 		colorRover = 'red',
-		colorMarker = 'purple',
+		colorMarker = 'goldenrod',
 		colorGrid = 'lightgreen',
 		colorCompass = 'lime',
 	} = options;
@@ -199,7 +221,7 @@ export default function render(
 	if (showTrace) {
 		drawPath(context, rover, trace, colorTrace);
 	}
-	drawMarkers(context, rover, markers, colorMarker);
+
 	drawRover(context, rover, colorRover);
 
 	// Restore transform
@@ -208,4 +230,6 @@ export default function render(
 	if (showCompass) {
 		drawCompass(context, rover, radius, colorCompass);
 	}
+
+	drawMarkers(context, rover, markers, radius, width, height, colorMarker);
 }
