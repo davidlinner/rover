@@ -33,10 +33,12 @@ export interface ActuatorValues {
 declare type EngineError = (value: number) => number;
 declare type LocationError = (location: Location) => Location;
 declare type HeadingError = (value: number) => number;
+declare type ProximityError = (distance: number) => number;
 export interface PhysicalOptions {
     readonly errorEngine?: Array<EngineError>;
     readonly errorLocation?: LocationError;
     readonly errorHeading?: HeadingError;
+    readonly errorProximity?: ProximityError;
 }
 export declare type PhysicalConstraints = (vehicle: VehicleOptions) => PhysicalOptions;
 export declare type ControlLoop = (sensors: SensorValues, actuators: ActuatorValues) => ActuatorValues;

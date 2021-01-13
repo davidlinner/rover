@@ -236,6 +236,10 @@ class Simulation {
     }
 
     private updateProximityValues() {
+        const {
+            errorProximity = d => d
+        } = this.physicalOptions;
+
         const position = this.rover.interpolatedPosition;
         const [baseX, baseY] = position;
 
@@ -261,7 +265,7 @@ class Simulation {
                 rayDistance = rayDistance * -1;
             }
 
-            this.proximityValues[index] = rayDistance;
+            this.proximityValues[index] = errorProximity(rayDistance);
         }
     }
 
@@ -276,7 +280,7 @@ class Simulation {
         const trueHeading =  (180 / Math.PI) * heading;
 
         const {
-            errorHeading = d=>d
+            errorHeading = d => d
         } = this.physicalOptions;
 
         return errorHeading(trueHeading);

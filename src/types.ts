@@ -123,6 +123,11 @@ type LocationError = (location: Location) => Location
 type HeadingError = (value: number) => number
 
 /**
+ * Add bias to a proximity value.
+ */
+type ProximityError = (distance: number) => number
+
+/**
  * Collection of options to create more authenticity.
  */
 export interface PhysicalOptions {
@@ -141,7 +146,12 @@ export interface PhysicalOptions {
     /**
      * Use to add an error to the heading sensor value
      */
-    readonly errorHeading? : HeadingError
+    readonly errorHeading?: HeadingError
+
+    /**
+     * Use to add errors to the proximity sensor values
+     */
+    readonly errorProximity?: ProximityError
 }
 
 /**
