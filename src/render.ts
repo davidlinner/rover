@@ -118,7 +118,7 @@ function drawObstacles(context: CanvasRenderingContext2D, {position, angle}: Rov
     context.restore()
 }
 
-function drawObstacleRays(context: CanvasRenderingContext2D, proximityValues: number[]) {
+function drawProximityValues(context: CanvasRenderingContext2D, proximityValues: number[]) {
     context.save()
     context.translate(context.canvas.width / 2, context.canvas.height / 2);
 
@@ -268,7 +268,7 @@ export default function render(
     // Restore transform
     context.restore();
     drawObstacles(context, rover, obstacles);
-    drawObstacleRays(context, proximityValues);
+    drawProximityValues(context, proximityValues);
 
     if (showCompass) {
         drawCompass(context, rover, radius, colorCompass);

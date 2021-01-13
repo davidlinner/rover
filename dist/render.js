@@ -74,7 +74,7 @@ function drawObstacles(context, { position, angle }, obstacles) {
     }
     context.restore();
 }
-function drawObstacleRays(context, proximityValues) {
+function drawProximityValues(context, proximityValues) {
     context.save();
     context.translate(context.canvas.width / 2, context.canvas.height / 2);
     for (let i = 0; i < proximityValues.length; i++) {
@@ -167,7 +167,7 @@ function render(context, rover, trace, markers, obstacles, proximityValues, opti
     drawRover(context, rover, colorRover);
     context.restore();
     drawObstacles(context, rover, obstacles);
-    drawObstacleRays(context, proximityValues);
+    drawProximityValues(context, proximityValues);
     if (showCompass) {
         drawCompass(context, rover, radius, colorCompass);
     }
