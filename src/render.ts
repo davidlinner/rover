@@ -1,4 +1,6 @@
-import { RenderingOptions } from './types';
+import {RenderingOptions} from "./types";
+import {MAX_PROXIMITY_DISTANCE} from "./Simulation";
+import {WheelConstraint} from "p2";
 
 const SCALE = 15;
 const GRID_GUTTER = 3;
@@ -10,21 +12,36 @@ export interface Marker {
 	position: Point;
 }
 
-export interface Rover {
-	width: number;
-	height: number;
-	angle: number;
-	position: Point;
+export interface Obstacle {
+    radius: number
+    position: Point
 }
 
-function drawRover(context: CanvasRenderingContext2D, { width, height }: Rover, color: string) {
-	context.save();
-	context.beginPath();
-	context.strokeStyle = color;
-	context.lineWidth = 0.1;
-	context.rect(-width / 2, -height / 2, width, height);
-	context.stroke();
-	context.restore();
+export interface Rover {
+    width: number
+    height: number
+    angle: number
+    position: Point,
+    wheelConstraints: Array<WheelConstraint>
+}
+
+function drawRover(context: CanvasRenderingContext2D, {width, height, wheelConstraints}: Rover, color: string){
+
+    context.save();
+    context.strokeStyle = color;
+    context.lineWidth = 0.1;
+    context.strokeRect(-width / 2, -height / 2, width, height);
+    context.restore();
+
+    const [wheelWidth, wheelHeight] = [0.1, 0.15]
+    for (const {localPosition} of wheelConstraints) {
+        const [x, y] = localPosition;
+
+        context.save();
+        context.fillStyle = 'salmon';
+        context.fillRect(x - wheelWidth / 2, y - wheelHeight / 2, wheelWidth, wheelHeight);
+        context.restore();
+    }
 }
 
 function drawPath(context: CanvasRenderingContext2D, { position, angle }: Rover, trace: Array<Point>, color: string) {
@@ -49,47 +66,38 @@ function drawPath(context: CanvasRenderingContext2D, { position, angle }: Rover,
 	context.restore();
 }
 
-function drawMarkers(
-	context: CanvasRenderingContext2D,
-	{ position, angle }: Rover,
-	markers: Array<Marker>,
-	radius: number,
-	width: number,
-	height: number,
-	color: string
-) {
-	if (markers.length < 1) return;
+function drawMarkers(context: CanvasRenderingContext2D, {position, angle}: Rover, markers: Array<Marker>, radius: number, width: number, height: number, color: string) {
+    if(markers.length < 1) return;
 
-	const [baseX, baseY] = position;
+    const roverX = position[0] * -1
+    const roverY = position[1]
 
-	context.save();
-	context.translate(width / 2, height / 2); // Translate to the center
-	context.scale(SCALE, SCALE); // Zoom in and flip y axis
-	context.rotate(-angle);
+    context.save();
+    context.translate(width / 2, height / 2);  // Translate to the center
+    context.rotate(-angle); // Back to world space
 
-	context.font = '2px sans-serif';
-	context.fillStyle = color;
-	context.textAlign = 'center';
+    context.font = "24px sans-serif";
+    context.fillStyle = color;
+    context.textAlign = "center";
 
-	for (let marker of markers) {
-		const { position = [0, 0], label = 'X' } = marker;
+    let index = 0;
+    for (let marker of markers) {
+        context.save();
 
-		const [x, y] = position;
+        const {
+            position,
+            label
+        } = marker;
 
-		const deltaX = baseX - x;
-		const deltaY = baseY - y;
+        const [markerX, markerY] = position;
 
-		const theta = Math.atan2(deltaX, deltaY);
-		const distance = Math.hypot(deltaX, deltaY);
+        const deltaX = (markerX - roverX);
+        const deltaY = (markerY - roverY);
 
-		const maxDistance = (radius - 15) / SCALE;
+        let theta = Math.atan2(deltaY, deltaX); // degree from pos X axis
+        const distance = Math.hypot(deltaX, deltaY) * SCALE;
 
-		context.save();
-
-		context.rotate(-theta);
-		context.translate(0, Math.min(distance, maxDistance));
-		context.rotate(theta);
-		context.rotate(angle);
+        const maxDistance = (radius - 15);
 
 		if (distance < maxDistance) {
 			const linearAlpha = Math.max(0, maxDistance - distance) / maxDistance;
@@ -98,42 +106,117 @@ function drawMarkers(
 			context.globalAlpha = 1;
 		}
 
-		context.beginPath();
-		context.arc(0, 0, 0.25, 0, Math.PI * 2);
-		context.fill();
-		context.restore();
-	}
+        // Walk to marker
+        context.rotate((Math.PI / 2) * -1); // Rotate to x-axis
+        context.rotate(-theta);
+        context.translate(0, Math.min(distance, maxDistance));
+        context.rotate(Math.PI / 2);
 
-	context.restore();
+        // Rotate back to draw text
+        context.rotate(theta);
+        context.rotate(angle);
+
+        if (distance < maxDistance) {
+            const linearAlpha = Math.max(0, maxDistance - distance) / maxDistance
+            context.globalAlpha = Math.min(linearAlpha * 8, 1);
+            context.fillText(label, 0, - 1);
+            context.globalAlpha = 1
+        }
+
+        context.beginPath();
+        context.arc(0,0, 5, 0, Math.PI * 2);
+        context.fill();
+        context.restore();
+
+        index++;
+        context.restore();
+    }
+
+    context.restore();
 }
 
-function drawCompass(context: CanvasRenderingContext2D, { angle }: Rover, radius: number, color: string) {
-	context.save();
-	context.translate(context.canvas.width / 2, context.canvas.height / 2);
-	context.rotate(-angle);
+function drawObstacles(context: CanvasRenderingContext2D, {position, angle}: Rover, obstacles: Obstacle[]) {
+    const [baseX, baseY] = position;
 
-	const fontSize = 16;
-	context.font = fontSize + 'px sans-serif';
-	context.textAlign = 'center';
-	context.textBaseline = 'middle';
-	context.fillStyle = color;
+    context.save()
 
-	const directions: Array<{ label: string; offset: [x: number, y: number] }> = [
-		{ label: 'N', offset: [0, -radius + fontSize] },
-		{ label: 'O', offset: [radius - fontSize, 0] },
-		{ label: 'S', offset: [0, radius - fontSize] },
-		{ label: 'W', offset: [-radius + fontSize, 0] },
-	];
+    context.translate(context.canvas.width / 2, context.canvas.height / 2);
+    context.scale(SCALE, SCALE);
+    context.rotate(-angle);
+    context.fillStyle = 'rgba(255, 0, 0, 0.2)';
+    context.strokeStyle = 'rgba(255, 0, 0, 1)';
+    context.lineWidth = 0.1;
 
-	for (const direction of directions) {
-		context.save();
-		context.translate(...direction.offset);
-		context.rotate(angle);
-		context.fillText(direction.label, 0, 0);
-		context.restore();
-	}
+    for (const obstacle of obstacles) {
+        const { position, radius } = obstacle;
+        const [x, y] = position;
 
-	context.restore();
+        context.save();
+        context.translate(baseX - x, baseY - y)
+        context.beginPath();
+        context.arc(0,0, radius, 0, Math.PI * 2);
+        context.fill();
+        context.stroke();
+        context.restore();
+    }
+
+    context.restore()
+}
+
+function drawObstacleRays(context: CanvasRenderingContext2D, proximityValues: number[]) {
+    context.save()
+    context.translate(context.canvas.width / 2, context.canvas.height / 2);
+
+    for (let i = 0; i < proximityValues.length; i++) {
+        const distance = proximityValues[i];
+
+        const directionAngleInRadiant = ((Math.PI * 2) / proximityValues.length) * i;
+
+        context.save();
+        context.rotate(directionAngleInRadiant);
+        context.translate(0, -distance * SCALE);
+
+        if (Math.floor(distance + 0.001) === MAX_PROXIMITY_DISTANCE) {
+            context.fillStyle = 'darkorange';
+            context.fillRect(-0.5, -0.5, 1, 1);
+        } else {
+            context.fillStyle = 'orange';
+            context.fillRect(-1, -1, 2, 2);
+        }
+
+        context.restore();
+    }
+
+    context.restore()
+}
+
+function drawCompass(context: CanvasRenderingContext2D, {angle}: Rover, radius: number, color: string) {
+    context.save();
+    context.translate(context.canvas.width / 2, context.canvas.height / 2);
+    context.rotate(-angle);
+
+    const fontSize = 16;
+    context.font = fontSize + 'px sans-serif';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillStyle = color;
+
+    const directions: Array<{label: string, offset: [x: number, y: number]}> = [
+        {label: 'N', offset: [0, -radius + fontSize]},
+        {label: 'O', offset: [radius - fontSize, 0]},
+        {label: 'S', offset: [0, radius - fontSize]},
+        {label: 'W', offset: [-radius + fontSize, 0]},
+    ]
+
+    for (const direction of directions) {
+        context.save()
+        context.translate(...direction.offset)
+        context.rotate(angle)
+        context.fillText(direction.label, 0, 0);
+        context.restore()
+    }
+
+    context.restore();
 }
 
 function drawGrid(context: CanvasRenderingContext2D, { position, angle }: Rover, rasterSize: number, color: string) {
@@ -168,68 +251,73 @@ function drawGrid(context: CanvasRenderingContext2D, { position, angle }: Rover,
 }
 
 export default function render(
-	context: CanvasRenderingContext2D,
-	rover: Rover,
-	trace: Array<Point>,
-	markers: Array<Marker>,
-	options: RenderingOptions
+    context: CanvasRenderingContext2D,
+    rover: Rover,
+    trace: Array<Point>,
+    markers: Array<Marker>,
+    obstacles: Array<Obstacle>,
+    proximityValues: Array<number>,
+    options: RenderingOptions,
 ) {
-	const {
-		height = 500,
-		width = 500,
-		showGrid = true,
-		showTrace = true,
-		showCompass = true,
-		colorTrace = 'blue',
-		colorRover = 'red',
-		colorMarker = 'goldenrod',
-		colorGrid = 'lightgreen',
-		colorCompass = 'lime',
-	} = options;
 
-	// Clear the canvas
-	context.fillStyle = 'black';
-	context.fillRect(0, 0, width, height);
-	//ctx.clearRect(0, 0, w, h);
+    const {
+        height = 500,
+        width = 500,
+        showGrid = true,
+        showTrace = true,
+        showCompass = true,
+        colorTrace = 'blue',
+        colorRover = 'red',
+        colorMarker = 'goldenrod',
+        colorGrid = 'lightgreen',
+        colorCompass = 'lime',
+    } = options;
 
-	// Transform the canvas
-	// Note that we need to flip the y axis since Canvas pixel coordinates
-	// goes from top to bottom, while physics does the opposite.
-	context.save();
-	context.translate(width / 2, height / 2); // Translate to the center
+    // Clear the canvas
+    context.fillStyle = "black";
+    context.fillRect(0, 0, width, height);
+    //ctx.clearRect(0, 0, w, h);
 
-	context.beginPath();
+    // Transform the canvas
+    // Note that we need to flip the y axis since Canvas pixel coordinates
+    // goes from top to bottom, while physics does the opposite.
+    context.save();
+    context.translate(width / 2, height / 2);  // Translate to the center
 
-	context.lineWidth = 0.5;
-	context.strokeStyle = colorGrid;
+    context.beginPath();
 
-	const radius = Math.min(width, height) / 2;
+    context.lineWidth = 0.5;
+    context.strokeStyle = colorGrid;
 
-	context.arc(0, 0, radius - 1, 0, Math.PI * 2, true);
-	context.stroke();
+    const radius = Math.min(width, height) / 2;
 
-	context.beginPath();
-	context.arc(0, 0, radius, 0, Math.PI * 2);
-	context.clip();
+    context.arc(0, 0, radius - 1, 0, Math.PI * 2, true);
+    context.stroke();
 
-	context.scale(SCALE, -SCALE); // Zoom in and flip y axis
+    context.beginPath();
+    context.arc(0, 0, radius, 0, Math.PI * 2);
+    context.clip();
 
-	// Draw
-	if (showGrid) {
-		drawGrid(context, rover, Math.ceil((width / SCALE / GRID_GUTTER) * 1.2), colorGrid);
-	}
-	if (showTrace) {
-		drawPath(context, rover, trace, colorTrace);
-	}
+    context.scale(SCALE, -SCALE);       // Zoom in and flip y axis
 
-	drawRover(context, rover, colorRover);
+    // Draw
+    if(showGrid){
+        drawGrid(context, rover, Math.ceil(width / SCALE / GRID_GUTTER * 1.2), colorGrid);
+    }
+    if(showTrace) {
+        drawPath(context, rover, trace, colorTrace);
+    }
 
-	// Restore transform
-	context.restore();
+    drawRover(context, rover, colorRover);
 
-	if (showCompass) {
-		drawCompass(context, rover, radius, colorCompass);
-	}
+    // Restore transform
+    context.restore();
+    drawObstacles(context, rover, obstacles);
+    drawObstacleRays(context, proximityValues);
 
-	drawMarkers(context, rover, markers, radius, width, height, colorMarker);
+    if (showCompass) {
+        drawCompass(context, rover, radius, colorCompass);
+    }
+
+    drawMarkers(context, rover, markers, radius, width, height, colorMarker);
 }

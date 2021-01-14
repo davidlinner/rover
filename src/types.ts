@@ -1,36 +1,42 @@
 /**
  * Options for the simulation.
  */
+
 export interface SimulationOptions {
-	/**
-	 * Main control loop, called in fixed intervals.
-	 */
-	loop: ControlLoop;
+    /**
+     * Main control loop, called in fixed intervals.
+     */
+    loop: ControlLoop
 
-	/**
-	 * Point on the globe which should be used as starting point for the simulation.
-	 */
-	origin: Location;
+    /**
+     * Point on the globe which should be used as starting point for the simulation.
+     */
+    origin: Location
 
-	/**
-	 * Points which should visualized statically. Mainly intended for debugging/demos.
-	 */
-	locationsOfInterest: Array<LocationOfInterest>;
+    /**
+     * Points which should visualized statically. Mainly intended for debugging/demos.
+     */
+    locationsOfInterest: Array<LocationOfInterest>
 
-	/**
-	 * Additional options for the visualization.
-	 */
-	renderingOptions: RenderingOptions;
+    /**
+     * Obstacle circles.
+     */
+    obstacles?: Array<{ latitude: number, longitude: number, radius: number }>
 
-	/**
-	 * Additional options like measurement errors to create more authenticity on the simulation.
-	 */
-	physicalConstraints?: PhysicalConstraints;
+    /**
+     * Additional options for the visualization.
+     */
+    renderingOptions: RenderingOptions
 
-	/**
-	 * Parent element the generated canvas should be added to.
-	 */
-	element: HTMLElement;
+    /**
+     * Additional options like measurement errors to create more authenticity on the simulation.
+     */
+    physicalConstraints?: PhysicalConstraints
+
+    /**
+     * Parent element the generated canvas should be added to.
+     */
+    element: HTMLElement
 }
 
 /**
@@ -66,30 +72,37 @@ export interface LocationOfInterest extends Location {
  * A composition of all sensor values available for the vehicle.
  */
 export interface SensorValues {
-	/**
-	 * Current position of the vehicle (measured from center of the vehicle).
-	 */
-	location: Location;
-	/**
-	 * Heading of the vehicle in degree [0 - 359.9...] where north is 0°, east is 90° ...
-	 */
-	heading: number;
+    /**
+     * Current position of the vehicle (measured from center of the vehicle).
+     */
+    location: Location,
 
-	/**
-	 * Time in milliseconds since the control loop with run the first time.
-	 */
-	clock: number;
+    /**
+     * Heading of the vehicle in degree [0 - 359.9...] where north is 0°, east is 90° ...
+     */
+    heading: number,
+
+    /**
+     * 360° distance values to obstacles in clockwise order ...
+     */
+    proximity: Array<number>,
+
+    /**
+     * Time in milliseconds since the control loop with run the first time.
+     */
+    clock: number
 }
 
 /**
  * A composition of all actuator values for the vehicle.
  */
 export interface ActuatorValues {
-	/**
-	 * Power values of all engines, left to right, top to bottom. Values have to
-	 * be in the range [-1.0 : 1.0], where 0 means the vehicle is at rest.
-	 */
-	engines: Array<number>;
+
+    /**
+     * Power values of all engines, left to right, top to bottom. Values have to
+     * be in the range [-1.0 : 1.0], where 0 means the vehicle is at rest.
+     */
+    engines: [number, number] | [number, number, number, number, number, number]
 }
 
 /**
@@ -110,24 +123,35 @@ type LocationError = (location: Location) => Location;
 type HeadingError = (value: number) => number;
 
 /**
+ * Add bias to a proximity value.
+ */
+type ProximityError = (distance: number) => number
+
+/**
  * Collection of options to create more authenticity.
  */
 export interface PhysicalOptions {
-	/**
-	 * Use to meme derivations when engine forces are applied to the ground, like
-	 * hanging wheels. One function per engine.
-	 */
-	readonly errorEngine?: Array<EngineError>;
 
-	/**
-	 * Use to add noise to the location provided by the location sensor.
-	 */
-	readonly errorLocation?: LocationError;
+    /**
+     * Use to meme derivations when engine forces are applied to the ground, like
+     * hanging wheels. One function per engine.
+     */
+    readonly errorEngine?: Array<EngineError>
 
-	/**
-	 * Use to add an error to the heading sensor value
-	 */
-	readonly errorHeading?: HeadingError;
+    /**
+     * Use to add noise to the location provided by the location sensor.
+     */
+    readonly errorLocation?: LocationError
+
+    /**
+     * Use to add an error to the heading sensor value
+     */
+    readonly errorHeading?: HeadingError
+
+    /**
+     * Use to add errors to the proximity sensor values
+     */
+    readonly errorProximity?: ProximityError
 }
 
 /**

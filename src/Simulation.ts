@@ -1,22 +1,24 @@
 import p2 from 'p2';
 import LatLon from 'geodesy/latlon-spherical.js';
 
-import render, { Marker, Point } from './render';
-import { distance } from './tools';
+import render, {Marker, Obstacle, Point} from "./render";
+import {distance} from "./tools";
 import {
-	ControlLoop,
-	Location,
-	LocationOfInterest,
-	PhysicalOptions,
-	RenderingOptions,
-	SimulationOptions,
-} from './types';
-import { AUTHENTICITY_LEVEL0 } from './Authenticity';
+    ActuatorValues,
+    ControlLoop,
+    Location,
+    LocationOfInterest, PhysicalOptions,
+    RenderingOptions,
+    SimulationOptions
+} from "./types";
+import {AUTHENTICITY_LEVEL0} from "./Authenticity";
 
-const ROVER_WIDTH = 0.5;
+const ROVER_WIDTH = .5;
 const ROVER_HEIGHT = 1.0;
 
 const MIN_TRACKING_POINT_DISTANCE = 1;
+
+export const MAX_PROXIMITY_DISTANCE = 8;
 
 const MAX_SUB_STEPS = 5; // Max physics ticks per render frame
 const FIXED_DELTA_TIME = 1 / 60; // Physics "tick" delta time
@@ -25,34 +27,41 @@ const CONTROL_INTERVAL = 20; //ms
 
 const BASE_ENGINE_FORCE = 1.0;
 
-const INITIAL_WHEEL_CONSTRAINTS: Array<{
-	localPosition: [number, number];
-	brakeForce: number;
-	sideFriction: number;
-}> = [
-	{
-		localPosition: [0.25, 0],
-		brakeForce: 0.5,
-		sideFriction: 3.0,
-	},
-	{
-		localPosition: [-0.25, 0],
-		brakeForce: 0.5,
-		sideFriction: 3.0,
-	},
-	// we add to stabilizing wheels which stops radial movement after the accelerating radial force is gone
-	// TODO: remove when a better physics engine or better parameterization for P2 is found
-	{
-		localPosition: [0, 0.25],
-		brakeForce: 0,
-		sideFriction: 0.075,
-	},
-	{
-		localPosition: [0, -0.25],
-		brakeForce: 0,
-		sideFriction: 0.075,
-	},
-];
+const WHEEL_BREAK_FORCE = 0.5;
+const WHEEL_SIDE_FRICTION = 0.5;
+
+const INITIAL_WHEEL_CONSTRAINTS: Array<{ localPosition: [number, number], brakeForce: number, sideFriction: number }> = [
+    {
+        localPosition: [0.25, 0.25],
+        brakeForce: WHEEL_BREAK_FORCE,
+        sideFriction: WHEEL_SIDE_FRICTION,
+    },
+    {
+        localPosition: [-0.25, 0.25],
+        brakeForce: WHEEL_BREAK_FORCE,
+        sideFriction: WHEEL_SIDE_FRICTION,
+    },
+    {
+        localPosition: [0.25, 0],
+        brakeForce: WHEEL_BREAK_FORCE,
+        sideFriction: WHEEL_SIDE_FRICTION,
+    },
+    {
+        localPosition: [-0.25, 0],
+        brakeForce: WHEEL_BREAK_FORCE,
+        sideFriction: WHEEL_SIDE_FRICTION,
+    },
+    {
+        localPosition: [0.25, -0.25],
+        brakeForce: WHEEL_BREAK_FORCE,
+        sideFriction: WHEEL_SIDE_FRICTION,
+    },
+    {
+        localPosition: [-0.25, -0.25],
+        brakeForce: WHEEL_BREAK_FORCE,
+        sideFriction: WHEEL_SIDE_FRICTION,
+    },
+]
 
 /**
  *
@@ -82,250 +91,370 @@ const INITIAL_WHEEL_CONSTRAINTS: Array<{
  * ```
  *
  */
+
 class Simulation {
-	private readonly context: CanvasRenderingContext2D;
 
-	private world: p2.World;
-	private rover: p2.Body;
+    readonly context: CanvasRenderingContext2D
 
-	private wheelConstraints: Array<p2.WheelConstraint>;
-	private engines = [0, 0];
+    private world: p2.World
+    private rover: p2.Body
 
-	private readonly loop: ControlLoop;
+    private wheelConstraints: Array<p2.WheelConstraint>
+    private engines: ActuatorValues['engines'] = [
+        0, 0,
+        0, 0,
+        0, 0,
+    ]
 
-	private offset: LatLon;
+    private readonly loop: ControlLoop
 
-	private trace: Array<Point> = [];
-	private markers: Array<Marker> = [];
+    private offset: LatLon;
 
-	private readonly renderingOptions: RenderingOptions;
-	private readonly physicalOptions: PhysicalOptions;
+    private trace: Array<Point> = []
+    private markers: Array<Marker> = []
+    private obstacles: Array<Obstacle> = []
+    private proximityValues: Array<number> = []
 
-	private lastRenderTime: number = 0;
-	private startTime: number = 0;
-	private interval: number | null = null;
-	private animationFrame: number | null = null;
+    private readonly renderingOptions: RenderingOptions;
+    private readonly physicalOptions: PhysicalOptions;
 
-	/**
-	 * Initializes a new simulation an starts the visualization without starting the control loop.
-	 *
-	 * @param simulationOptions Options to run the simulation with.
-	 */
-	constructor(simulationOptions: SimulationOptions) {
-		const {
-			loop,
-			element,
-			renderingOptions = {},
-			physicalConstraints = AUTHENTICITY_LEVEL0,
-			locationsOfInterest = [],
-			origin,
-		} = simulationOptions;
+    private lastRenderTime: number = 0
+    private startTime: number = 0
+    private interval: number | null = null
+    private animationFrame: number | null = null
 
-		const { height = 500, width = 500 } = renderingOptions;
+    /**
+     * Initializes a new simulation an starts the visualization without starting the control loop.
+     *
+     * @param simulationOptions Options to run the simulation with.
+     */
+    constructor(simulationOptions: SimulationOptions) {
 
-		this.loop = loop;
+        const {
+            loop,
+            element,
+            renderingOptions = {},
+            physicalConstraints = AUTHENTICITY_LEVEL0,
+            locationsOfInterest = [],
+            obstacles = [],
+            origin,
+        } = simulationOptions;
 
-		// Init canvas
-		const canvas = this.createCanvas(element, width, height);
-		const context = canvas.getContext('2d');
-		if (!context) {
-			throw new Error('Cannot create 2D rendering context for canvas.');
-		}
+        const {
+            height = 500,
+            width = 500
+        } = renderingOptions;
 
-		this.initMarkers(locationsOfInterest, origin);
+        this.loop = loop;
 
-		// Init P2 physics engine
-		const world = new p2.World({
-			gravity: [0, 0],
-		});
+        // Init canvas
+        const canvas = this.createCanvas(element, width, height);
+        const context = canvas.getContext('2d');
+        if (!context) {
+            throw new Error('Cannot create 2D rendering context for canvas.');
+        }
 
-		const rover = new p2.Body({ mass: 1 });
-		rover.addShape(new p2.Box({ width: ROVER_WIDTH, height: ROVER_HEIGHT }));
-		world.addBody(rover);
+        this.initMarkers(locationsOfInterest, origin);
+        // Init P2 physics engine
+        const world = new p2.World({
+            gravity: [0, 0]
+        });
 
-		const vehicle = new p2.TopDownVehicle(rover);
-		const wheelConstraints = INITIAL_WHEEL_CONSTRAINTS.map(({ sideFriction, brakeForce, localPosition }) => {
-			// Add one front wheel and one back wheel - we don't actually need four :)
-			const wheelConstraint = vehicle.addWheel({ localPosition });
-			wheelConstraint.setSideFriction(sideFriction);
-			wheelConstraint.setBrakeForce(brakeForce);
+        const rover = new p2.Body({mass: 1});
+        rover.addShape(
+            new p2.Box({width: ROVER_WIDTH, height: ROVER_HEIGHT}));
+        world.addBody(rover);
 
-			return wheelConstraint;
-		});
-		vehicle.addToWorld(world);
+        const vehicle = new p2.TopDownVehicle(rover);
+        const wheelConstraints = INITIAL_WHEEL_CONSTRAINTS.map(({sideFriction, brakeForce, localPosition}) => {
+            // Add one front wheel and one back wheel - we don't actually need four :)
+            const wheelConstraint = vehicle.addWheel({localPosition});
+            wheelConstraint.setSideFriction(sideFriction)
+            wheelConstraint.setBrakeForce(brakeForce);
 
-		this.world = world;
-		this.rover = rover;
-		this.wheelConstraints = wheelConstraints;
+            return wheelConstraint;
+        })
+        vehicle.addToWorld(world);
 
-		this.context = context;
-		this.renderingOptions = {
-			...renderingOptions,
-			width,
-			height,
-		};
+        this.world = world;
+        this.rover = rover;
+        this.wheelConstraints = wheelConstraints;
 
-		this.physicalOptions = physicalConstraints({ engineCount: 2 }); // constant for the moment
+        this.context = context;
+        this.renderingOptions = {
+            ...renderingOptions,
+            width,
+            height
+        };
 
-		this.offset = new LatLon(origin.latitude, origin.longitude);
-	}
+        this.physicalOptions = physicalConstraints({engineCount:2}); // constant for the moment
 
-	private createCanvas(parent: HTMLElement, width: number, height: number): HTMLCanvasElement {
-		const document = parent.ownerDocument;
-		const canvas = document.createElement('canvas');
-		canvas.width = width;
-		canvas.height = height;
-		parent.appendChild(canvas);
-		return canvas;
-	}
+        this.offset = new LatLon(origin.latitude, origin.longitude);
 
-	private initMarkers(locationsOfInterest: Array<LocationOfInterest>, origin: Location) {
-		console.log('lois', locationsOfInterest);
-		if (origin) {
-			this.markers = locationsOfInterest.map(({ label, latitude, longitude }) => {
-				const markerLatLon = new LatLon(latitude, longitude);
+        this.initObstacles(origin, obstacles);
+        this.updateProximityValues();
+    }
 
-				const x = markerLatLon.distanceTo(new LatLon(latitude, origin.longitude));
-				const y = markerLatLon.distanceTo(new LatLon(origin.latitude, longitude));
+    private createCanvas(parent: HTMLElement, width: number, height: number): HTMLCanvasElement {
+        const document = parent.ownerDocument;
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        parent.appendChild(canvas);
+        return canvas;
+    }
 
-				return {
-					position: [x, y],
-					label,
-				};
-			});
-			console.log(this.markers);
-		}
-	}
+    private initMarkers(locationsOfInterest: Array<LocationOfInterest>, origin: Location) {
+        if (origin) {
+            this.markers = locationsOfInterest.map(({label, latitude, longitude}) => {
+                const marker = new LatLon(latitude, longitude);
 
-	/**
-	 * Returns current rover heading.
-	 */
-	getRoverHeading() {
-		let heading = this.rover.angle % (2 * Math.PI);
-		if (heading < 0) {
-			heading += 2 * Math.PI;
-		}
-		const trueHeading = (180 / Math.PI) * heading;
+                const unsignedX = marker.distanceTo(new LatLon(latitude, origin.longitude));
+                const unsignedY = marker.distanceTo(new LatLon(origin.latitude, longitude));
 
-		const { errorHeading = (d) => d } = this.physicalOptions;
+                const signedX = unsignedX * ((origin.longitude - marker.longitude) > 0 ? -1 : 1);
+                const signedY = unsignedY * ((origin.latitude - marker.latitude) > 0 ? -1 : 1);
 
-		return errorHeading(trueHeading);
-	}
+                return {
+                    position: [signedX, signedY],
+                    label
+                }
+            })
+        }
+    }
 
-	/**
-	 * Returns current rover location.
-	 */
-	getRoverLocation(): Location {
-		const [x, y] = this.rover.interpolatedPosition;
+    private initObstacles(origin: Location, obstacles: Array<{ latitude: number, longitude: number, radius: number }>) {
+        if (origin) {
+            this.obstacles = obstacles.map(({radius, latitude, longitude}) => {
+                const obstacleLatLon = new LatLon(latitude, longitude);
 
-		const trueLocation = {
-			longitude: this.offset.destinationPoint(Math.abs(x), x <= 0 ? 270 : 90).longitude,
-			latitude: this.offset.destinationPoint(Math.abs(y), y <= 0 ? 180 : 0).latitude,
-		};
+                const unsignedX = obstacleLatLon.distanceTo(new LatLon(latitude, origin.longitude));
+                const unsignedY = obstacleLatLon.distanceTo(new LatLon(origin.latitude, longitude));
 
-		const { errorLocation = (location) => location } = this.physicalOptions;
+                const signedX = unsignedX * ((origin.longitude - obstacleLatLon.longitude) > 0 ? -1 : 1);
+                const signedY = unsignedY * ((origin.latitude - obstacleLatLon.latitude) > 0 ? -1 : 1);
 
-		return errorLocation(trueLocation);
-	}
+                const obstacleShape = new p2.Circle({radius})
+                const obstacleBody = new p2.Body({
+                    mass: 0, // static
+                    position: [signedX, signedY],
+                    angle: 0,
+                    angularVelocity: 0,
+                    fixedX: true,
+                    fixedY: true,
+                    fixedRotation: true,
+                    collisionResponse: true,
+                });
+                obstacleBody.addShape(obstacleShape);
 
-	/**
-	 * Starts the simulation control loop at an interval less than 50ms.
-	 */
-	start() {
-		if (this.interval) {
-			throw new Error('Simulation is already running.');
-		}
+                this.world.addBody(obstacleBody)
 
-		this.startTime = performance.now();
+                return {
+                    position: [signedX, signedY],
+                    radius,
+                }
+            })
+        }
+    }
 
-		this.interval = window.setInterval(() => {
-			const clock = performance.now() - this.startTime;
-			const actuatorValues = this.loop(
-				{
-					heading: this.getRoverHeading(),
-					location: this.getRoverLocation(),
-					clock,
-				},
-				{
-					engines: this.engines,
-				}
-			);
+    private updateProximityValues() {
+        const {
+            errorProximity = d => d
+        } = this.physicalOptions;
 
-			const { engines } = actuatorValues;
+        const position = this.rover.interpolatedPosition;
+        const [baseX, baseY] = position;
 
-			const { errorEngine = [] } = this.physicalOptions;
+        const resolution = 180;
 
-			if (engines.length === this.engines.length) {
-				for (let i = 0; i < engines.length; i++) {
-					if (engines[i] <= 1.0 && engines[i] >= -1.0) {
-						this.engines[i] = engines[i];
+        for (let index = 0; index < resolution; index++) {
+            const directionAngleInRadiant = (((Math.PI * 2) / resolution) * index) + this.rover.interpolatedAngle;
 
-						const errorFunction = errorEngine[i] || ((v) => v);
+            const xx = baseX + (MAX_PROXIMITY_DISTANCE * Math.cos(directionAngleInRadiant + Math.PI / 2))
+            const yy = baseY + (MAX_PROXIMITY_DISTANCE * Math.sin(directionAngleInRadiant + Math.PI / 2))
 
-						this.wheelConstraints[i].engineForce = BASE_ENGINE_FORCE * errorFunction(engines[i]);
-					} else {
-						console.error('Wheel power out of range [-1.0 : 1.0]');
-					}
-				}
-			}
-		}, CONTROL_INTERVAL);
+            const to: [number, number] = [xx, yy];
 
-		this.animationFrame = requestAnimationFrame(this.animate);
-	}
+            const ray = new p2.Ray({from: position, to, mode: p2.Ray.CLOSEST, skipBackfaces: true});
+            const rayResult = new p2.RaycastResult();
 
-	/**
-	 * Stops the simulation control loop.
-	 */
-	stop() {
-		if (this.interval != null) {
-			clearInterval(this.interval);
-			this.interval = null;
-		}
+            rayResult.reset();
+            // Possible improvement: Only traverse through obstacles
+            this.world.raycast(rayResult, ray);
+            let rayDistance = rayResult.getHitDistance(ray)
 
-		if (this.animationFrame != null) {
-			cancelAnimationFrame(this.animationFrame);
-			this.animationFrame = null;
-		}
-	}
+            if (rayDistance < 0) {
+                rayDistance = rayDistance * -1;
+            }
 
-	private trackPosition() {
-		const position = this.rover.interpolatedPosition;
+            this.proximityValues[index] = errorProximity(rayDistance);
+        }
+    }
 
-		const [lastPosition] = this.trace;
-		if (!lastPosition || distance(lastPosition, position) > MIN_TRACKING_POINT_DISTANCE) {
-			this.trace.unshift([...position]);
-		}
-	}
+    /**
+     * Returns current rover heading.
+     */
+    getRoverHeading() {
+        let heading = this.rover.angle % (2 * Math.PI);
+        if (heading < 0) {
+            heading += 2 * Math.PI
+        }
+        const trueHeading =  (180 / Math.PI) * heading;
 
-	private animate = (time: number) => {
-		this.animationFrame = requestAnimationFrame(this.animate);
+        const {
+            errorHeading = d => d
+        } = this.physicalOptions;
 
-		// Get the elapsed time since last frame, in seconds
-		let deltaTime = this.lastRenderTime ? (time - this.lastRenderTime) / 1000 : 0;
-		this.lastRenderTime = time;
+        return errorHeading(trueHeading);
+    }
 
-		// Make sure the time delta is not too big (can happen if user switches browser tab)
-		deltaTime = Math.min(1 / 10, deltaTime);
+    /**
+     * Returns current rover location.
+     */
+    getRoverLocation(): Location {
+        const [x, y] = this.rover.interpolatedPosition;
 
-		// Move physics bodies forward in time
-		this.world.step(FIXED_DELTA_TIME, deltaTime, MAX_SUB_STEPS);
+        const trueLocation = {
+            longitude: this.offset.destinationPoint(Math.abs(x), x <= 0 ? 90 : 270).longitude,
+            latitude: this.offset.destinationPoint(Math.abs(y), y <= 0 ? 180 : 0).latitude
+        }
 
-		this.trackPosition();
+        const {
+            errorLocation = location => location
+        } = this.physicalOptions;
 
-		// Render scene
-		render(
-			this.context,
-			{
-				position: this.rover.interpolatedPosition,
-				angle: this.rover.angle,
-				width: ROVER_WIDTH,
-				height: ROVER_HEIGHT,
-			},
-			this.trace,
-			this.markers,
-			this.renderingOptions
-		);
-	};
+        return errorLocation(trueLocation);
+    }
+
+    /**
+     * Starts the simulation control loop at an interval less than 50ms.
+     */
+    start() {
+        if(this.interval){
+            throw new Error('Simulation is already running.')
+        }
+
+        this.startTime = performance.now();
+
+        this.interval = window.setInterval(() => {
+
+            const clock = performance.now() - this.startTime;
+
+            this.updateProximityValues()
+            const actuatorValues = this.loop({
+                heading: this.getRoverHeading(),
+                location: this.getRoverLocation(),
+                proximity: this.proximityValues,
+                clock,
+            }, {
+                engines: this.engines
+            })
+
+            const {
+                engines,
+            } = actuatorValues;
+
+            const {
+                errorEngine = []
+            } = this.physicalOptions;
+
+            if (engines.length === 2 || engines.length === 6) {
+                for(let i = 0; i < engines.length; i++){
+                    if(engines[i]<=1.0 && engines[i]>= -1.0){
+
+                        // Setting engines with a length of 2 will be deprecated and is only to keep current algorithms working.
+                        if (engines.length === 2) {
+                            if (this.wheelConstraints[i].localPosition[0] > 0) {
+                                // Left Side
+                                this.engines[0] = engines[i];
+                                this.wheelConstraints[0].engineForce = BASE_ENGINE_FORCE * engines[i]
+                                this.engines[2] = engines[i];
+                                this.wheelConstraints[2].engineForce = BASE_ENGINE_FORCE * engines[i]
+                                this.engines[4] = engines[i];
+                                this.wheelConstraints[4].engineForce = BASE_ENGINE_FORCE * engines[i]
+                            } else {
+                                // Right Side
+                                this.engines[1] = engines[i];
+                                this.wheelConstraints[1].engineForce = BASE_ENGINE_FORCE * engines[i]
+                                this.engines[3] = engines[i];
+                                this.wheelConstraints[3].engineForce = BASE_ENGINE_FORCE * engines[i]
+                                this.engines[5] = engines[i];
+                                this.wheelConstraints[5].engineForce = BASE_ENGINE_FORCE * engines[i]
+                            }
+                        } else if (engines.length === 6) {
+                            this.engines[i] = engines[i];
+                            const errorFunction = errorEngine[i] || (v => v);
+
+                            this.wheelConstraints[i].engineForce = BASE_ENGINE_FORCE * errorFunction(engines[i]);
+                        }
+
+                    } else {
+                        console.error('Wheel power out of range [-1.0 : 1.0]');
+                    }
+                }
+            }
+
+        }, CONTROL_INTERVAL);
+
+        this.animationFrame = requestAnimationFrame(this.animate);
+    }
+
+    /**
+     * Stops the simulation control loop.
+     */
+    stop() {
+        if (this.interval != null) {
+            clearInterval(this.interval);
+            this.interval = null;
+        }
+
+        if (this.animationFrame != null) {
+            cancelAnimationFrame(this.animationFrame);
+            this.animationFrame = null;
+        }
+    }
+
+    private trackPosition() {
+        const position = this.rover.interpolatedPosition;
+
+        const [lastPosition] = this.trace;
+        if (!lastPosition || distance(lastPosition, position) > MIN_TRACKING_POINT_DISTANCE) {
+            this.trace.unshift([...position]);
+        }
+    }
+
+    private animate = (time: number)  => {
+        this.animationFrame = requestAnimationFrame(this.animate);
+
+        // Get the elapsed time since last frame, in seconds
+        let deltaTime = this.lastRenderTime ? (time - this.lastRenderTime) / 1000 : 0;
+        this.lastRenderTime = time;
+
+        // Make sure the time delta is not too big (can happen if user switches browser tab)
+        deltaTime = Math.min(1 / 10, deltaTime);
+
+        // Move physics bodies forward in time
+        this.world.step(FIXED_DELTA_TIME, deltaTime, MAX_SUB_STEPS);
+
+        this.trackPosition();
+
+        // Render scene
+        render(
+            this.context,
+            {
+                position: this.rover.interpolatedPosition,
+                angle: this.rover.angle,
+                width: ROVER_WIDTH,
+                height: ROVER_HEIGHT,
+                wheelConstraints: this.wheelConstraints,
+            },
+            this.trace,
+            this.markers,
+            this.obstacles,
+            this.proximityValues,
+            this.renderingOptions,
+        );
+    }
 }
 
 export { Simulation, SimulationOptions };

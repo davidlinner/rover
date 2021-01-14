@@ -1,5 +1,6 @@
 import { Location, PhysicalOptions, VehicleOptions } from './types';
 import LatLon from 'geodesy/latlon-spherical.js';
+import { MAX_PROXIMITY_DISTANCE } from './Simulation';
 import { randn_bm } from './utils';
 
 /**
@@ -12,12 +13,20 @@ export function AUTHENTICITY_LEVEL0(vehicleOptions?: VehicleOptions): PhysicalOp
 	const errorHeading = (heading: number) => heading;
 	const errorEngine = new Array<number>(engineCount).map(() => (value: number) => value);
 	const errorLocation = (location: Location) => location;
+	const errorProximity = (distance: number) => distance;
 
 	return {
 		errorEngine,
 		errorHeading,
 		errorLocation,
+		errorProximity,
 	};
+}
+
+function biasedRandom(bias: number, influence = 1, min = 0, max = 1) {
+	const rnd = Math.random() * (max - min) + min;
+	const mix = Math.random() * influence;
+	return rnd * (1 - mix) + bias * mix;
 }
 
 /**
@@ -53,10 +62,26 @@ export function AUTHENTICITY_LEVEL1(vehicleOptions?: VehicleOptions): PhysicalOp
 		};
 	};
 
+	const errorProximity = (distance: number) => {
+		let error = (biasedRandom(0.5) - 0.5) * 0.2;
+
+		if (Math.floor(distance + 0.001) === MAX_PROXIMITY_DISTANCE) {
+			error = (biasedRandom(0.25) - 0.25) * 0.1 * MAX_PROXIMITY_DISTANCE;
+		}
+
+		// Faulty value
+		if (Math.random() < 0.001) {
+			error = MAX_PROXIMITY_DISTANCE * 10;
+		}
+
+		return distance + error;
+	};
+
 	return {
 		errorEngine,
 		errorHeading,
 		errorLocation,
+		errorProximity,
 	};
 }
 
