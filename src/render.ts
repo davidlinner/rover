@@ -1,6 +1,6 @@
-import {RenderingOptions} from "./types";
-import {MAX_PROXIMITY_DISTANCE} from "./Simulation";
-import {WheelConstraint} from "p2";
+import { RenderingOptions } from './types';
+import { MAX_PROXIMITY_DISTANCE } from './Simulation';
+import { WheelConstraint } from 'p2';
 
 const SCALE = 15;
 const GRID_GUTTER = 3;
@@ -13,35 +13,34 @@ export interface Marker {
 }
 
 export interface Obstacle {
-    radius: number
-    position: Point
+	radius: number;
+	position: Point;
 }
 
 export interface Rover {
-    width: number
-    height: number
-    angle: number
-    position: Point,
-    wheelConstraints: Array<WheelConstraint>
+	width: number;
+	height: number;
+	angle: number;
+	position: Point;
+	wheelConstraints: Array<WheelConstraint>;
 }
 
-function drawRover(context: CanvasRenderingContext2D, {width, height, wheelConstraints}: Rover, color: string){
+function drawRover(context: CanvasRenderingContext2D, { width, height, wheelConstraints }: Rover, color: string) {
+	context.save();
+	context.strokeStyle = color;
+	context.lineWidth = 0.1;
+	context.strokeRect(-width / 2, -height / 2, width, height);
+	context.restore();
 
-    context.save();
-    context.strokeStyle = color;
-    context.lineWidth = 0.1;
-    context.strokeRect(-width / 2, -height / 2, width, height);
-    context.restore();
+	const [wheelWidth, wheelHeight] = [0.1, 0.15];
+	for (const { localPosition } of wheelConstraints) {
+		const [x, y] = localPosition;
 
-    const [wheelWidth, wheelHeight] = [0.1, 0.15]
-    for (const {localPosition} of wheelConstraints) {
-        const [x, y] = localPosition;
-
-        context.save();
-        context.fillStyle = 'salmon';
-        context.fillRect(x - wheelWidth / 2, y - wheelHeight / 2, wheelWidth, wheelHeight);
-        context.restore();
-    }
+		context.save();
+		context.fillStyle = 'salmon';
+		context.fillRect(x - wheelWidth / 2, y - wheelHeight / 2, wheelWidth, wheelHeight);
+		context.restore();
+	}
 }
 
 function drawPath(context: CanvasRenderingContext2D, { position, angle }: Rover, trace: Array<Point>, color: string) {
@@ -66,38 +65,55 @@ function drawPath(context: CanvasRenderingContext2D, { position, angle }: Rover,
 	context.restore();
 }
 
-function drawMarkers(context: CanvasRenderingContext2D, {position, angle}: Rover, markers: Array<Marker>, radius: number, width: number, height: number, color: string) {
-    if(markers.length < 1) return;
+function drawMarkers(
+	context: CanvasRenderingContext2D,
+	{ position, angle }: Rover,
+	markers: Array<Marker>,
+	radius: number,
+	width: number,
+	height: number,
+	color: string
+) {
+	if (markers.length < 1) return;
 
-    const roverX = position[0] * -1
-    const roverY = position[1]
+	const roverX = position[0] * -1;
+	const roverY = position[1];
 
-    context.save();
-    context.translate(width / 2, height / 2);  // Translate to the center
-    context.rotate(-angle); // Back to world space
+	context.save();
+	context.translate(width / 2, height / 2); // Translate to the center
+	context.rotate(-angle); // Back to world space
 
-    context.font = "24px sans-serif";
-    context.fillStyle = color;
-    context.textAlign = "center";
+	context.font = '24px sans-serif';
+	context.fillStyle = color;
+	context.textAlign = 'center';
 
-    let index = 0;
-    for (let marker of markers) {
-        context.save();
+	let index = 0;
+	for (let marker of markers) {
+		context.save();
 
-        const {
-            position,
-            label
-        } = marker;
+		const { position, label } = marker;
 
-        const [markerX, markerY] = position;
+		const [markerX, markerY] = position;
 
-        const deltaX = (markerX - roverX);
-        const deltaY = (markerY - roverY);
+		const deltaX = markerX - roverX;
+		const deltaY = markerY - roverY;
 
-        let theta = Math.atan2(deltaY, deltaX); // degree from pos X axis
-        const distance = Math.hypot(deltaX, deltaY) * SCALE;
+		let theta = Math.atan2(deltaY, deltaX); // degree from pos X axis
+		const distance = Math.hypot(deltaX, deltaY) * SCALE;
 
-        const maxDistance = (radius - 15);
+		const maxDistance = radius - 15;
+
+		context.save();
+
+		// Walk to marker
+		context.rotate((Math.PI / 2) * -1); // Rotate to x-axis
+		context.rotate(-theta);
+		context.translate(0, Math.min(distance, maxDistance));
+		context.rotate(Math.PI / 2);
+
+		// Rotate back to draw text
+		context.rotate(theta);
+		context.rotate(angle);
 
 		if (distance < maxDistance) {
 			const linearAlpha = Math.max(0, maxDistance - distance) / maxDistance;
@@ -106,117 +122,100 @@ function drawMarkers(context: CanvasRenderingContext2D, {position, angle}: Rover
 			context.globalAlpha = 1;
 		}
 
-        // Walk to marker
-        context.rotate((Math.PI / 2) * -1); // Rotate to x-axis
-        context.rotate(-theta);
-        context.translate(0, Math.min(distance, maxDistance));
-        context.rotate(Math.PI / 2);
+		context.beginPath();
+		context.arc(0, 0, 5, 0, Math.PI * 2);
+		context.fill();
+		context.restore();
 
-        // Rotate back to draw text
-        context.rotate(theta);
-        context.rotate(angle);
+		index++;
+		context.restore();
+	}
 
-        if (distance < maxDistance) {
-            const linearAlpha = Math.max(0, maxDistance - distance) / maxDistance
-            context.globalAlpha = Math.min(linearAlpha * 8, 1);
-            context.fillText(label, 0, - 1);
-            context.globalAlpha = 1
-        }
-
-        context.beginPath();
-        context.arc(0,0, 5, 0, Math.PI * 2);
-        context.fill();
-        context.restore();
-
-        index++;
-        context.restore();
-    }
-
-    context.restore();
+	context.restore();
 }
 
-function drawObstacles(context: CanvasRenderingContext2D, {position, angle}: Rover, obstacles: Obstacle[]) {
-    const [baseX, baseY] = position;
+function drawObstacles(context: CanvasRenderingContext2D, { position, angle }: Rover, obstacles: Obstacle[]) {
+	const [baseX, baseY] = position;
 
-    context.save()
+	context.save();
 
-    context.translate(context.canvas.width / 2, context.canvas.height / 2);
-    context.scale(SCALE, SCALE);
-    context.rotate(-angle);
-    context.fillStyle = 'rgba(255, 0, 0, 0.2)';
-    context.strokeStyle = 'rgba(255, 0, 0, 1)';
-    context.lineWidth = 0.1;
+	context.translate(context.canvas.width / 2, context.canvas.height / 2);
+	context.scale(SCALE, SCALE);
+	context.rotate(-angle);
+	context.fillStyle = 'rgba(255, 0, 0, 0.2)';
+	context.strokeStyle = 'rgba(255, 0, 0, 1)';
+	context.lineWidth = 0.1;
 
-    for (const obstacle of obstacles) {
-        const { position, radius } = obstacle;
-        const [x, y] = position;
+	for (const obstacle of obstacles) {
+		const { position, radius } = obstacle;
+		const [x, y] = position;
 
-        context.save();
-        context.translate(baseX - x, baseY - y)
-        context.beginPath();
-        context.arc(0,0, radius, 0, Math.PI * 2);
-        context.fill();
-        context.stroke();
-        context.restore();
-    }
+		context.save();
+		context.translate(baseX - x, baseY - y);
+		context.beginPath();
+		context.arc(0, 0, radius, 0, Math.PI * 2);
+		context.fill();
+		context.stroke();
+		context.restore();
+	}
 
-    context.restore()
+	context.restore();
 }
 
 function drawObstacleRays(context: CanvasRenderingContext2D, proximityValues: number[]) {
-    context.save()
-    context.translate(context.canvas.width / 2, context.canvas.height / 2);
+	context.save();
+	context.translate(context.canvas.width / 2, context.canvas.height / 2);
 
-    for (let i = 0; i < proximityValues.length; i++) {
-        const distance = proximityValues[i];
+	for (let i = 0; i < proximityValues.length; i++) {
+		const distance = proximityValues[i];
 
-        const directionAngleInRadiant = ((Math.PI * 2) / proximityValues.length) * i;
+		const directionAngleInRadiant = ((Math.PI * 2) / proximityValues.length) * i;
 
-        context.save();
-        context.rotate(directionAngleInRadiant);
-        context.translate(0, -distance * SCALE);
+		context.save();
+		context.rotate(directionAngleInRadiant);
+		context.translate(0, -distance * SCALE);
 
-        if (Math.floor(distance + 0.001) === MAX_PROXIMITY_DISTANCE) {
-            context.fillStyle = 'darkorange';
-            context.fillRect(-0.5, -0.5, 1, 1);
-        } else {
-            context.fillStyle = 'orange';
-            context.fillRect(-1, -1, 2, 2);
-        }
+		if (Math.floor(distance + 0.001) === MAX_PROXIMITY_DISTANCE) {
+			context.fillStyle = 'darkorange';
+			context.fillRect(-0.5, -0.5, 1, 1);
+		} else {
+			context.fillStyle = 'orange';
+			context.fillRect(-1, -1, 2, 2);
+		}
 
-        context.restore();
-    }
+		context.restore();
+	}
 
-    context.restore()
+	context.restore();
 }
 
-function drawCompass(context: CanvasRenderingContext2D, {angle}: Rover, radius: number, color: string) {
-    context.save();
-    context.translate(context.canvas.width / 2, context.canvas.height / 2);
-    context.rotate(-angle);
+function drawCompass(context: CanvasRenderingContext2D, { angle }: Rover, radius: number, color: string) {
+	context.save();
+	context.translate(context.canvas.width / 2, context.canvas.height / 2);
+	context.rotate(-angle);
 
-    const fontSize = 16;
-    context.font = fontSize + 'px sans-serif';
-    context.textAlign = 'center';
-    context.textBaseline = 'middle';
-    context.fillStyle = color;
+	const fontSize = 16;
+	context.font = fontSize + 'px sans-serif';
+	context.textAlign = 'center';
+	context.textBaseline = 'middle';
+	context.fillStyle = color;
 
-    const directions: Array<{label: string, offset: [x: number, y: number]}> = [
-        {label: 'N', offset: [0, -radius + fontSize]},
-        {label: 'O', offset: [radius - fontSize, 0]},
-        {label: 'S', offset: [0, radius - fontSize]},
-        {label: 'W', offset: [-radius + fontSize, 0]},
-    ]
+	const directions: Array<{ label: string; offset: [x: number, y: number] }> = [
+		{ label: 'N', offset: [0, -radius + fontSize] },
+		{ label: 'O', offset: [radius - fontSize, 0] },
+		{ label: 'S', offset: [0, radius - fontSize] },
+		{ label: 'W', offset: [-radius + fontSize, 0] },
+	];
 
-    for (const direction of directions) {
-        context.save()
-        context.translate(...direction.offset)
-        context.rotate(angle)
-        context.fillText(direction.label, 0, 0);
-        context.restore()
-    }
+	for (const direction of directions) {
+		context.save();
+		context.translate(...direction.offset);
+		context.rotate(angle);
+		context.fillText(direction.label, 0, 0);
+		context.restore();
+	}
 
-    context.restore();
+	context.restore();
 }
 
 function drawGrid(context: CanvasRenderingContext2D, { position, angle }: Rover, rasterSize: number, color: string) {
@@ -251,73 +250,72 @@ function drawGrid(context: CanvasRenderingContext2D, { position, angle }: Rover,
 }
 
 export default function render(
-    context: CanvasRenderingContext2D,
-    rover: Rover,
-    trace: Array<Point>,
-    markers: Array<Marker>,
-    obstacles: Array<Obstacle>,
-    proximityValues: Array<number>,
-    options: RenderingOptions,
+	context: CanvasRenderingContext2D,
+	rover: Rover,
+	trace: Array<Point>,
+	markers: Array<Marker>,
+	obstacles: Array<Obstacle>,
+	proximityValues: Array<number>,
+	options: RenderingOptions
 ) {
+	const {
+		height = 500,
+		width = 500,
+		showGrid = true,
+		showTrace = true,
+		showCompass = true,
+		colorTrace = 'blue',
+		colorRover = 'red',
+		colorMarker = 'goldenrod',
+		colorGrid = 'lightgreen',
+		colorCompass = 'lime',
+	} = options;
 
-    const {
-        height = 500,
-        width = 500,
-        showGrid = true,
-        showTrace = true,
-        showCompass = true,
-        colorTrace = 'blue',
-        colorRover = 'red',
-        colorMarker = 'goldenrod',
-        colorGrid = 'lightgreen',
-        colorCompass = 'lime',
-    } = options;
+	// Clear the canvas
+	context.fillStyle = 'black';
+	context.fillRect(0, 0, width, height);
+	//ctx.clearRect(0, 0, w, h);
 
-    // Clear the canvas
-    context.fillStyle = "black";
-    context.fillRect(0, 0, width, height);
-    //ctx.clearRect(0, 0, w, h);
+	// Transform the canvas
+	// Note that we need to flip the y axis since Canvas pixel coordinates
+	// goes from top to bottom, while physics does the opposite.
+	context.save();
+	context.translate(width / 2, height / 2); // Translate to the center
 
-    // Transform the canvas
-    // Note that we need to flip the y axis since Canvas pixel coordinates
-    // goes from top to bottom, while physics does the opposite.
-    context.save();
-    context.translate(width / 2, height / 2);  // Translate to the center
+	context.beginPath();
 
-    context.beginPath();
+	context.lineWidth = 0.5;
+	context.strokeStyle = colorGrid;
 
-    context.lineWidth = 0.5;
-    context.strokeStyle = colorGrid;
+	const radius = Math.min(width, height) / 2;
 
-    const radius = Math.min(width, height) / 2;
+	context.arc(0, 0, radius - 1, 0, Math.PI * 2, true);
+	context.stroke();
 
-    context.arc(0, 0, radius - 1, 0, Math.PI * 2, true);
-    context.stroke();
+	context.beginPath();
+	context.arc(0, 0, radius, 0, Math.PI * 2);
+	context.clip();
 
-    context.beginPath();
-    context.arc(0, 0, radius, 0, Math.PI * 2);
-    context.clip();
+	context.scale(SCALE, -SCALE); // Zoom in and flip y axis
 
-    context.scale(SCALE, -SCALE);       // Zoom in and flip y axis
+	// Draw
+	if (showGrid) {
+		drawGrid(context, rover, Math.ceil((width / SCALE / GRID_GUTTER) * 1.2), colorGrid);
+	}
+	if (showTrace) {
+		drawPath(context, rover, trace, colorTrace);
+	}
 
-    // Draw
-    if(showGrid){
-        drawGrid(context, rover, Math.ceil(width / SCALE / GRID_GUTTER * 1.2), colorGrid);
-    }
-    if(showTrace) {
-        drawPath(context, rover, trace, colorTrace);
-    }
+	drawRover(context, rover, colorRover);
 
-    drawRover(context, rover, colorRover);
+	// Restore transform
+	context.restore();
+	drawObstacles(context, rover, obstacles);
+	drawObstacleRays(context, proximityValues);
 
-    // Restore transform
-    context.restore();
-    drawObstacles(context, rover, obstacles);
-    drawObstacleRays(context, proximityValues);
+	if (showCompass) {
+		drawCompass(context, rover, radius, colorCompass);
+	}
 
-    if (showCompass) {
-        drawCompass(context, rover, radius, colorCompass);
-    }
-
-    drawMarkers(context, rover, markers, radius, width, height, colorMarker);
+	drawMarkers(context, rover, markers, radius, width, height, colorMarker);
 }
