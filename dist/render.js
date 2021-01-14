@@ -42,25 +42,20 @@ function drawMarkers(context, { position, angle }, markers, radius, width, heigh
     context.save();
     context.translate(width / 2, height / 2);
     context.rotate(-angle);
-    context.font = "24px sans-serif";
+    context.font = '24px sans-serif';
     context.fillStyle = color;
-    context.textAlign = "center";
+    context.textAlign = 'center';
     let index = 0;
     for (let marker of markers) {
         context.save();
         const { position, label } = marker;
         const [markerX, markerY] = position;
-        const deltaX = (markerX - roverX);
-        const deltaY = (markerY - roverY);
+        const deltaX = markerX - roverX;
+        const deltaY = markerY - roverY;
         let theta = Math.atan2(deltaY, deltaX);
         const distance = Math.hypot(deltaX, deltaY) * SCALE;
-        const maxDistance = (radius - 15);
-        if (distance < maxDistance) {
-            const linearAlpha = Math.max(0, maxDistance - distance) / maxDistance;
-            context.globalAlpha = Math.min(linearAlpha * 8, 1);
-            context.fillText(label, 0, -1);
-            context.globalAlpha = 1;
-        }
+        const maxDistance = radius - 15;
+        context.save();
         context.rotate((Math.PI / 2) * -1);
         context.rotate(-theta);
         context.translate(0, Math.min(distance, maxDistance));
@@ -173,7 +168,7 @@ function drawGrid(context, { position, angle }, rasterSize, color) {
 }
 function render(context, rover, trace, markers, obstacles, proximityValues, options) {
     const { height = 500, width = 500, showGrid = true, showTrace = true, showCompass = true, colorTrace = 'blue', colorRover = 'red', colorMarker = 'goldenrod', colorGrid = 'lightgreen', colorCompass = 'lime', } = options;
-    context.fillStyle = "black";
+    context.fillStyle = 'black';
     context.fillRect(0, 0, width, height);
     context.save();
     context.translate(width / 2, height / 2);
@@ -188,7 +183,7 @@ function render(context, rover, trace, markers, obstacles, proximityValues, opti
     context.clip();
     context.scale(SCALE, -SCALE);
     if (showGrid) {
-        drawGrid(context, rover, Math.ceil(width / SCALE / GRID_GUTTER * 1.2), colorGrid);
+        drawGrid(context, rover, Math.ceil((width / SCALE / GRID_GUTTER) * 1.2), colorGrid);
     }
     if (showTrace) {
         drawPath(context, rover, trace, colorTrace);
