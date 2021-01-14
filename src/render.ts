@@ -66,41 +66,48 @@ function drawPath(context: CanvasRenderingContext2D, {position, angle}: Rover, t
     context.restore();
 }
 
-
 function drawMarkers(context: CanvasRenderingContext2D, {position, angle}: Rover, markers: Array<Marker>, radius: number, width: number, height: number, color: string) {
     if(markers.length < 1) return;
 
-    const [baseX, baseY] = position;
+    const roverX = position[0] * -1
+    const roverY = position[1]
 
     context.save();
     context.translate(width / 2, height / 2);  // Translate to the center
-    context.scale(SCALE, SCALE);       // Zoom in and flip y axis
-    context.rotate(-angle);
+    context.rotate(-angle); // Back to world space
 
-    context.font = "2px sans-serif";
+    context.font = "24px sans-serif";
     context.fillStyle = color;
     context.textAlign = "center";
 
-    for(let marker of markers) {
+    let index = 0;
+    for (let marker of markers) {
+        context.save();
+
         const {
-            position = [0, 0],
-            label = 'X'
+            position,
+            label
         } = marker;
 
-        const [x,y] = position;
+        const [markerX, markerY] = position;
 
-        const deltaX = baseX - x;
-        const deltaY = baseY - y;
+        const deltaX = (markerX - roverX);
+        const deltaY = (markerY - roverY);
 
-        const theta = Math.atan2(deltaX, deltaY);
-        const distance = Math.hypot(deltaX, deltaY);
+        let theta = Math.atan2(deltaY, deltaX); // degree from pos X axis
+        const distance = Math.hypot(deltaX, deltaY) * SCALE;
 
-        const maxDistance = (radius - 15) / SCALE;
+        const maxDistance = (radius - 15);
 
         context.save();
 
+        // Walk to marker
+        context.rotate((Math.PI / 2) * -1); // Rotate to x-axis
         context.rotate(-theta);
         context.translate(0, Math.min(distance, maxDistance));
+        context.rotate(Math.PI / 2);
+
+        // Rotate back to draw text
         context.rotate(theta);
         context.rotate(angle);
 
@@ -112,8 +119,11 @@ function drawMarkers(context: CanvasRenderingContext2D, {position, angle}: Rover
         }
 
         context.beginPath();
-        context.arc(0,0, .25, 0, Math.PI * 2);
+        context.arc(0,0, 5, 0, Math.PI * 2);
         context.fill();
+        context.restore();
+
+        index++;
         context.restore();
     }
 

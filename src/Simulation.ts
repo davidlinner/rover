@@ -210,7 +210,7 @@ class Simulation {
                 const unsignedY = marker.distanceTo(new LatLon(origin.latitude, longitude));
 
                 // This seems rather hacky 😬
-                const signedX = unsignedX * ((origin.longitude - marker.longitude) > 0 ? 1 : -1);
+                const signedX = unsignedX * ((origin.longitude - marker.longitude) > 0 ? -1 : 1);
                 const signedY = unsignedY * ((origin.latitude - marker.latitude) > 0 ? -1 : 1);
 
                 return {
@@ -226,13 +226,17 @@ class Simulation {
             this.obstacles = obstacles.map(({radius, latitude, longitude}) => {
                 const obstacleLatLon = new LatLon(latitude, longitude);
 
-                const x = obstacleLatLon.distanceTo(new LatLon(latitude, origin.longitude));
-                const y = obstacleLatLon.distanceTo(new LatLon(origin.latitude, longitude));
+                const unsignedX = obstacleLatLon.distanceTo(new LatLon(latitude, origin.longitude));
+                const unsignedY = obstacleLatLon.distanceTo(new LatLon(origin.latitude, longitude));
+
+                // This seems rather hacky 😬
+                const signedX = unsignedX * ((origin.longitude - obstacleLatLon.longitude) > 0 ? 1 : -1);
+                const signedY = unsignedY * ((origin.latitude - obstacleLatLon.latitude) > 0 ? -1 : 1);
 
                 const obstacleShape = new p2.Circle({radius})
                 const obstacleBody = new p2.Body({
                     mass: 0, // static
-                    position: [x, y],
+                    position: [signedX, signedY],
                     angle: 0,
                     angularVelocity: 0,
                     fixedX: true,
@@ -245,7 +249,7 @@ class Simulation {
                 this.world.addBody(obstacleBody)
 
                 return {
-                    position: [x, y],
+                    position: [signedX, signedY],
                     radius,
                 }
             })

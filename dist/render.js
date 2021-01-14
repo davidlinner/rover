@@ -37,25 +37,29 @@ function drawPath(context, { position, angle }, trace, color) {
 function drawMarkers(context, { position, angle }, markers, radius, width, height, color) {
     if (markers.length < 1)
         return;
-    const [baseX, baseY] = position;
+    const roverX = position[0] * -1;
+    const roverY = position[1];
     context.save();
     context.translate(width / 2, height / 2);
-    context.scale(SCALE, SCALE);
     context.rotate(-angle);
-    context.font = "2px sans-serif";
+    context.font = "24px sans-serif";
     context.fillStyle = color;
     context.textAlign = "center";
+    let index = 0;
     for (let marker of markers) {
-        const { position = [0, 0], label = 'X' } = marker;
-        const [x, y] = position;
-        const deltaX = baseX - x;
-        const deltaY = baseY - y;
-        const theta = Math.atan2(deltaX, deltaY);
-        const distance = Math.hypot(deltaX, deltaY);
-        const maxDistance = (radius - 15) / SCALE;
         context.save();
+        const { position, label } = marker;
+        const [markerX, markerY] = position;
+        const deltaX = (markerX - roverX);
+        const deltaY = (markerY - roverY);
+        let theta = Math.atan2(deltaY, deltaX);
+        const distance = Math.hypot(deltaX, deltaY) * SCALE;
+        const maxDistance = (radius - 15);
+        context.save();
+        context.rotate((Math.PI / 2) * -1);
         context.rotate(-theta);
         context.translate(0, Math.min(distance, maxDistance));
+        context.rotate(Math.PI / 2);
         context.rotate(theta);
         context.rotate(angle);
         if (distance < maxDistance) {
@@ -65,8 +69,10 @@ function drawMarkers(context, { position, angle }, markers, radius, width, heigh
             context.globalAlpha = 1;
         }
         context.beginPath();
-        context.arc(0, 0, .25, 0, Math.PI * 2);
+        context.arc(0, 0, 5, 0, Math.PI * 2);
         context.fill();
+        context.restore();
+        index++;
         context.restore();
     }
     context.restore();
