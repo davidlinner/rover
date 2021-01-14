@@ -212,7 +212,6 @@ class Simulation {
                 const unsignedX = marker.distanceTo(new LatLon(latitude, origin.longitude));
                 const unsignedY = marker.distanceTo(new LatLon(origin.latitude, longitude));
 
-                // This seems rather hacky 😬
                 const signedX = unsignedX * ((origin.longitude - marker.longitude) > 0 ? -1 : 1);
                 const signedY = unsignedY * ((origin.latitude - marker.latitude) > 0 ? -1 : 1);
 
@@ -232,8 +231,7 @@ class Simulation {
                 const unsignedX = obstacleLatLon.distanceTo(new LatLon(latitude, origin.longitude));
                 const unsignedY = obstacleLatLon.distanceTo(new LatLon(origin.latitude, longitude));
 
-                // This seems rather hacky 😬
-                const signedX = unsignedX * ((origin.longitude - obstacleLatLon.longitude) > 0 ? 1 : -1);
+                const signedX = unsignedX * ((origin.longitude - obstacleLatLon.longitude) > 0 ? -1 : 1);
                 const signedY = unsignedY * ((origin.latitude - obstacleLatLon.latitude) > 0 ? -1 : 1);
 
                 const obstacleShape = new p2.Circle({radius})
@@ -317,7 +315,7 @@ class Simulation {
         const [x, y] = this.rover.interpolatedPosition;
 
         const trueLocation = {
-            longitude: this.offset.destinationPoint(Math.abs(x), x <= 0 ? 270 : 90).longitude,
+            longitude: this.offset.destinationPoint(Math.abs(x), x <= 0 ? 90 : 270).longitude,
             latitude: this.offset.destinationPoint(Math.abs(y), y <= 0 ? 180 : 0).latitude
         }
 

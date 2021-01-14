@@ -144,7 +144,7 @@ class Simulation {
                 const obstacleLatLon = new latlon_spherical_js_1.default(latitude, longitude);
                 const unsignedX = obstacleLatLon.distanceTo(new latlon_spherical_js_1.default(latitude, origin.longitude));
                 const unsignedY = obstacleLatLon.distanceTo(new latlon_spherical_js_1.default(origin.latitude, longitude));
-                const signedX = unsignedX * ((origin.longitude - obstacleLatLon.longitude) > 0 ? 1 : -1);
+                const signedX = unsignedX * ((origin.longitude - obstacleLatLon.longitude) > 0 ? -1 : 1);
                 const signedY = unsignedY * ((origin.latitude - obstacleLatLon.latitude) > 0 ? -1 : 1);
                 const obstacleShape = new p2_1.default.Circle({ radius });
                 const obstacleBody = new p2_1.default.Body({
@@ -199,7 +199,7 @@ class Simulation {
     getRoverLocation() {
         const [x, y] = this.rover.interpolatedPosition;
         const trueLocation = {
-            longitude: this.offset.destinationPoint(Math.abs(x), x <= 0 ? 270 : 90).longitude,
+            longitude: this.offset.destinationPoint(Math.abs(x), x <= 0 ? 90 : 270).longitude,
             latitude: this.offset.destinationPoint(Math.abs(y), y <= 0 ? 180 : 0).latitude
         };
         const { errorLocation = location => location } = this.physicalOptions;
