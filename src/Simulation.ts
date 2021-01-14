@@ -1,5 +1,5 @@
 import p2 from 'p2';
-import LatLon from 'geodesy/latlon-spherical.js'
+import LatLon from 'geodesy/latlon-spherical.js';
 
 import render, {Marker, Obstacle, Point} from "./render";
 import {distance} from "./tools";
@@ -457,4 +457,4 @@ class Simulation {
     }
 }
 
-export {Simulation, SimulationOptions}
+export { Simulation, SimulationOptions };

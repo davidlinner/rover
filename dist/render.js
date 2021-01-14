@@ -55,7 +55,12 @@ function drawMarkers(context, { position, angle }, markers, radius, width, heigh
         let theta = Math.atan2(deltaY, deltaX);
         const distance = Math.hypot(deltaX, deltaY) * SCALE;
         const maxDistance = (radius - 15);
-        context.save();
+        if (distance < maxDistance) {
+            const linearAlpha = Math.max(0, maxDistance - distance) / maxDistance;
+            context.globalAlpha = Math.min(linearAlpha * 8, 1);
+            context.fillText(label, 0, -1);
+            context.globalAlpha = 1;
+        }
         context.rotate((Math.PI / 2) * -1);
         context.rotate(-theta);
         context.translate(0, Math.min(distance, maxDistance));

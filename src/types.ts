@@ -43,29 +43,29 @@ export interface SimulationOptions {
  * Basic vehicle options
  */
 export interface VehicleOptions {
-    readonly engineCount: number
+	readonly engineCount: number;
 }
 
 /**
  * A point on the globe.
  */
 export interface Location {
-    /**
-     * The latitude value in decimal degree [-90 < x < 90]
-     */
-    latitude: number,
+	/**
+	 * The latitude value in decimal degree [-90 < x < 90]
+	 */
+	latitude: number;
 
-    /**
-     * The longitude value of the location in degree [-180 < x < 180]
-     */
-    longitude: number
+	/**
+	 * The longitude value of the location in degree [-180 < x < 180]
+	 */
+	longitude: number;
 }
 
 /**
  * A labeled point on the globe.
  */
-export interface LocationOfInterest extends Location{
-    label: string
+export interface LocationOfInterest extends Location {
+	label: string;
 }
 
 /**
@@ -109,18 +109,18 @@ export interface ActuatorValues {
  * Add bias to an engine value.
  * Must return a value x with -1.0 => x <= 1.0.
  */
-type EngineError = (value: number) => number
+type EngineError = (value: number) => number;
 
 /**
  * Add bias to a location value.
  */
-type LocationError = (location: Location) => Location
+type LocationError = (location: Location) => Location;
 
 /**
  * Add bias to a heading value.
  * Must return a value a with  360 > x <= 0.
  */
-type HeadingError = (value: number) => number
+type HeadingError = (value: number) => number;
 
 /**
  * Add bias to a proximity value.
@@ -157,64 +157,64 @@ export interface PhysicalOptions {
 /**
  * Factory to create physical properties based in vehicle options
  */
-export type PhysicalConstraints = (vehicle: VehicleOptions) => PhysicalOptions
+export type PhysicalConstraints = (vehicle: VehicleOptions) => PhysicalOptions;
 
 /**
  * Signature of the loop function.
  */
-export type ControlLoop = (sensors: SensorValues, actuators: ActuatorValues) => ActuatorValues
+export type ControlLoop = (sensors: SensorValues, actuators: ActuatorValues) => ActuatorValues;
 
 /**
  * Additional options to control the visualization of the simulation.
  */
 export interface RenderingOptions {
-    /**
-     * Width of the generated canvas.
-     */
-    width?: number
+	/**
+	 * Width of the generated canvas.
+	 */
+	width?: number;
 
-    /**
-     * Heigth of the generated canvas.
-     */
-    height?: number
+	/**
+	 * Heigth of the generated canvas.
+	 */
+	height?: number;
 
-    /**
-     * Renders background grid if true.
-     */
-    showGrid?: boolean
+	/**
+	 * Renders background grid if true.
+	 */
+	showGrid?: boolean;
 
-    /**
-     * Renders vehicle trace path if true.
-     */
-    showTrace?: boolean
+	/**
+	 * Renders vehicle trace path if true.
+	 */
+	showTrace?: boolean;
 
-    /**
-     * Renders compass directions if true.
-     */
-    showCompass?: boolean
+	/**
+	 * Renders compass directions if true.
+	 */
+	showCompass?: boolean;
 
-    /**
-     * Hex color value of CSS color name for the grid lines.
-     */
-    colorGrid?: string
+	/**
+	 * Hex color value of CSS color name for the grid lines.
+	 */
+	colorGrid?: string;
 
-    /**
-     * Hex color value of CSS color name for the trace path.
-     */
-    colorTrace?: string
+	/**
+	 * Hex color value of CSS color name for the trace path.
+	 */
+	colorTrace?: string;
 
-    /**
-     * Hex color value of CSS color name for rover.
-     */
-    colorRover?: string
+	/**
+	 * Hex color value of CSS color name for rover.
+	 */
+	colorRover?: string;
 
-    /**
-     * Hex color value of CSS color name for markers.
-     */
-    colorMarker?: string
+	/**
+	 * Hex color value of CSS color name for markers.
+	 */
+	colorMarker?: string;
 
-    /**
-     * Hex color value of CSS color name for compass.
-     */
-    colorCompass?: string
+	/**
+	 * Hex color value of CSS color name for compass.
+	 */
+	colorCompass?: string;
 }
