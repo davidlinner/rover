@@ -27,36 +27,39 @@ const CONTROL_INTERVAL = 20; //ms
 
 const BASE_ENGINE_FORCE = 1.0;
 
+const WHEEL_BREAK_FORCE = 0.5;
+const WHEEL_SIDE_FRICTION = 0.5;
+
 const INITIAL_WHEEL_CONSTRAINTS: Array<{ localPosition: [number, number], brakeForce: number, sideFriction: number }> = [
     {
         localPosition: [0.25, 0.25],
-        brakeForce: 0.5,
-        sideFriction: 0.5
+        brakeForce: WHEEL_BREAK_FORCE,
+        sideFriction: WHEEL_SIDE_FRICTION,
     },
     {
         localPosition: [-0.25, 0.25],
-        brakeForce: 0.5,
-        sideFriction: 0.5
+        brakeForce: WHEEL_BREAK_FORCE,
+        sideFriction: WHEEL_SIDE_FRICTION,
     },
     {
         localPosition: [0.25, 0],
-        brakeForce: 0.5,
-        sideFriction: 0.5
+        brakeForce: WHEEL_BREAK_FORCE,
+        sideFriction: WHEEL_SIDE_FRICTION,
     },
     {
         localPosition: [-0.25, 0],
-        brakeForce: 0.5,
-        sideFriction: 0.5
+        brakeForce: WHEEL_BREAK_FORCE,
+        sideFriction: WHEEL_SIDE_FRICTION,
     },
     {
         localPosition: [0.25, -0.25],
-        brakeForce: 0.5,
-        sideFriction: 0.5
+        brakeForce: WHEEL_BREAK_FORCE,
+        sideFriction: WHEEL_SIDE_FRICTION,
     },
     {
         localPosition: [-0.25, -0.25],
-        brakeForce: 0.5,
-        sideFriction: 0.5
+        brakeForce: WHEEL_BREAK_FORCE,
+        sideFriction: WHEEL_SIDE_FRICTION,
     },
 ]
 
