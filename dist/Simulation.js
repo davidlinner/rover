@@ -59,8 +59,8 @@ class Simulation {
             0, 0
         ];
         this.steering = [
-            0, 0,
-            0, 0
+            180, 180,
+            180, 180
         ];
         this.trace = [];
         this.markers = [];
@@ -243,8 +243,8 @@ class Simulation {
             if (steering.length === 4) {
                 steering.forEach((steeringValue, index) => {
                     if (steeringValue >= 0 || steeringValue <= 360) {
-                        const mappedSteeringValue = (steeringValue + 360) * Math.PI / 180;
-                        this.steering[index] = mappedSteeringValue;
+                        const mappedSteeringValue = (steeringValue - 180) * Math.PI / 180;
+                        this.steering[index] = steeringValue;
                         this.wheelConstraints[index].steerValue = mappedSteeringValue;
                     }
                     else {

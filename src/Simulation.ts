@@ -107,8 +107,8 @@ class Simulation {
 	];
 
 	private steering: ActuatorValues['steering'] = [
-		0, 0,
-		0, 0
+		180, 180,
+		180, 180
 	];
 
 	private readonly loop: ControlLoop;
@@ -380,8 +380,8 @@ class Simulation {
 			if (steering.length === 4) {
 			    steering.forEach((steeringValue, index) => {
 			        if (steeringValue >= 0 || steeringValue <= 360) {
-			        	const mappedSteeringValue = (steeringValue + 360) * Math.PI / 180
-			            this.steering[index] = mappedSteeringValue
+			        	const mappedSteeringValue = (steeringValue - 180) * Math.PI / 180 // p2 needs rad
+			            this.steering[index] = steeringValue
                         this.wheelConstraints[index].steerValue = mappedSteeringValue
                     } else {
 			            console.error('Steering value out of range [0 : 360]')
