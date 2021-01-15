@@ -159,11 +159,8 @@ class Simulation {
             const rayResult = new p2_1.default.RaycastResult();
             rayResult.reset();
             this.world.raycast(rayResult, ray);
-            let rayDistance = rayResult.getHitDistance(ray);
-            if (rayDistance < 0) {
-                rayDistance = rayDistance * -1;
-            }
-            this.proximityValues[index] = errorProximity(rayDistance);
+            const rayDistance = errorProximity(Math.abs(rayResult.getHitDistance(ray)));
+            this.proximityValues[index] = rayDistance >= exports.MAX_PROXIMITY_DISTANCE - 0.01 ? -1 : rayDistance;
         }
     }
     getRoverHeading() {

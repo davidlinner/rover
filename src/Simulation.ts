@@ -259,13 +259,9 @@ class Simulation {
             rayResult.reset();
             // Possible improvement: Only traverse through obstacles
             this.world.raycast(rayResult, ray);
-            let rayDistance = Math.abs(rayResult.getHitDistance(ray));
+            const rayDistance = errorProximity(Math.abs(rayResult.getHitDistance(ray)));
 
-            if(rayDistance >= MAX_PROXIMITY_DISTANCE) {
-                rayDistance = -1;
-            }
-
-            this.proximityValues[index] = errorProximity(rayDistance);
+            this.proximityValues[index] = rayDistance >= MAX_PROXIMITY_DISTANCE - 0.01 ? -1 : rayDistance;
         }
     }
 
