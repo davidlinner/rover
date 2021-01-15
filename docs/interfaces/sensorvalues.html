@@ -90,6 +90,7 @@
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="sensorvalues.html#clock" class="tsd-kind-icon">clock</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="sensorvalues.html#heading" class="tsd-kind-icon">heading</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="sensorvalues.html#location" class="tsd-kind-icon">location</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="sensorvalues.html#proximity" class="tsd-kind-icon">proximity</a></li>
 							</ul>
 						</section>
 					</div>
@@ -103,7 +104,7 @@
 					<div class="tsd-signature tsd-kind-icon">clock<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/davidlinner/rover/blob/b4461c2/src/types.ts#L81">types.ts:81</a></li>
+							<li>Defined in <a href="https://github.com/davidlinner/rover/blob/db2bfb9/src/types.ts#L95">types.ts:95</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -118,7 +119,7 @@
 					<div class="tsd-signature tsd-kind-icon">heading<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/davidlinner/rover/blob/b4461c2/src/types.ts#L76">types.ts:76</a></li>
+							<li>Defined in <a href="https://github.com/davidlinner/rover/blob/db2bfb9/src/types.ts#L84">types.ts:84</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -133,12 +134,28 @@
 					<div class="tsd-signature tsd-kind-icon">location<span class="tsd-signature-symbol">:</span> <a href="location.html" class="tsd-signature-type" data-tsd-kind="Interface">Location</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/davidlinner/rover/blob/b4461c2/src/types.ts#L72">types.ts:72</a></li>
+							<li>Defined in <a href="https://github.com/davidlinner/rover/blob/db2bfb9/src/types.ts#L79">types.ts:79</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
 							<p>Current position of the vehicle (measured from center of the vehicle).</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="proximity" class="tsd-anchor"></a>
+					<h3>proximity</h3>
+					<div class="tsd-signature tsd-kind-icon">proximity<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">[]</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/davidlinner/rover/blob/db2bfb9/src/types.ts#L90">types.ts:90</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>360° distance values to obstacles in clockwise order. Sampling is done in 2° steps. Samples are given in meters.
+							A sample of -1 means no obstacle.</p>
 						</div>
 					</div>
 				</section>
@@ -186,6 +203,9 @@
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
 								<a href="sensorvalues.html#location" class="tsd-kind-icon">location</a>
 							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="sensorvalues.html#proximity" class="tsd-kind-icon">proximity</a>
+							</li>
 						</ul>
 					</li>
 				</ul>
@@ -201,6 +221,9 @@
 					</li>
 					<li class=" tsd-kind-type-alias">
 						<a href="../index.html#physicalconstraints" class="tsd-kind-icon">Physical<wbr>Constraints</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="../index.html#max_proximity_distance" class="tsd-kind-icon">MAX_<wbr>PROXIMITY_<wbr>DISTANCE</a>
 					</li>
 					<li class=" tsd-kind-function">
 						<a href="../index.html#authenticity_level0" class="tsd-kind-icon">AUTHENTICITY_<wbr>LEVEL0</a>

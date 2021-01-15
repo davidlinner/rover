@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const Simulation_1 = require("./Simulation");
 const SCALE = 15;
 const GRID_GUTTER = 3;
 function drawRover(context, { width, height }, color) {
@@ -64,6 +65,49 @@ function drawMarkers(context, { position, angle }, markers, radius, width, heigh
     }
     context.restore();
 }
+function drawObstacles(context, { position, angle }, obstacles) {
+    const [baseX, baseY] = position;
+    context.save();
+    context.translate(context.canvas.width / 2, context.canvas.height / 2);
+    context.scale(SCALE, SCALE);
+    context.rotate(-angle);
+    context.fillStyle = 'rgba(255, 0, 0, 0.2)';
+    context.strokeStyle = 'rgba(255, 0, 0, 1)';
+    context.lineWidth = 0.1;
+    for (const obstacle of obstacles) {
+        const { position, radius } = obstacle;
+        const [x, y] = position;
+        context.save();
+        context.translate(baseX - x, baseY - y);
+        context.beginPath();
+        context.arc(0, 0, radius, 0, Math.PI * 2);
+        context.fill();
+        context.stroke();
+        context.restore();
+    }
+    context.restore();
+}
+function drawProximityValues(context, proximityValues) {
+    context.save();
+    context.translate(context.canvas.width / 2, context.canvas.height / 2);
+    for (let i = 0; i < proximityValues.length; i++) {
+        const distance = proximityValues[i];
+        const directionAngleInRadiant = ((Math.PI * 2) / proximityValues.length) * i;
+        context.save();
+        context.rotate(directionAngleInRadiant);
+        context.translate(0, -distance * SCALE);
+        if (Math.floor(distance + 0.001) === Simulation_1.MAX_PROXIMITY_DISTANCE) {
+            context.fillStyle = 'darkorange';
+            context.fillRect(-0.5, -0.5, 1, 1);
+        }
+        else {
+            context.fillStyle = 'orange';
+            context.fillRect(-1, -1, 2, 2);
+        }
+        context.restore();
+    }
+    context.restore();
+}
 function drawCompass(context, { angle }, radius, color) {
     context.save();
     context.translate(context.canvas.width / 2, context.canvas.height / 2);
@@ -110,7 +154,7 @@ function drawGrid(context, { position, angle }, rasterSize, color) {
     context.stroke();
     context.restore();
 }
-function render(context, rover, trace, markers, options) {
+function render(context, rover, trace, markers, obstacles, proximityValues, options) {
     const { height = 500, width = 500, showGrid = true, showTrace = true, showCompass = true, colorTrace = 'blue', colorRover = 'red', colorMarker = 'goldenrod', colorGrid = 'lightgreen', colorCompass = 'lime', } = options;
     context.fillStyle = "black";
     context.fillRect(0, 0, width, height);
@@ -134,6 +178,8 @@ function render(context, rover, trace, markers, options) {
     }
     drawRover(context, rover, colorRover);
     context.restore();
+    drawObstacles(context, rover, obstacles);
+    drawProximityValues(context, proximityValues);
     if (showCompass) {
         drawCompass(context, rover, radius, colorCompass);
     }

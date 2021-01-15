@@ -19,7 +19,8 @@ export interface SimulationOptions {
     locationsOfInterest: Array<LocationOfInterest>
 
     /**
-     * Obstacle circles.
+     * Obstacles. Currently only "cylindrical" obstacles are supported, where
+     * the radius has to be given in meters.
      */
     obstacles?: Array<{ latitude: number, longitude: number, radius: number }>
 
@@ -83,7 +84,8 @@ export interface SensorValues {
     heading: number,
 
     /**
-     * 360° distance values to obstacles in clockwise order ...
+     * 360° distance values to obstacles in clockwise order. Sampling is done in 2° steps. Samples are given in meters.
+     * A sample of -1 means no obstacle.
      */
     proximity: Array<number>,
 
