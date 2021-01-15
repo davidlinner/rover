@@ -1,4 +1,5 @@
 import {RenderingOptions} from "./types";
+import {MAX_PROXIMITY_DISTANCE} from "./Simulation";
 
 const SCALE = 15;
 const GRID_GUTTER = 3;
@@ -7,6 +8,11 @@ export type Point = [number, number]
 
 export interface Marker {
     label: string
+    position: Point
+}
+
+export interface Obstacle {
+    radius: number
     position: Point
 }
 
@@ -104,6 +110,61 @@ function drawMarkers(context: CanvasRenderingContext2D, {position, angle}: Rover
     context.restore();
 }
 
+function drawObstacles(context: CanvasRenderingContext2D, {position, angle}: Rover, obstacles: Obstacle[]) {
+    const [baseX, baseY] = position;
+
+    context.save()
+
+    context.translate(context.canvas.width / 2, context.canvas.height / 2);
+    context.scale(SCALE, SCALE);
+    context.rotate(-angle);
+    context.fillStyle = 'rgba(255, 0, 0, 0.2)';
+    context.strokeStyle = 'rgba(255, 0, 0, 1)';
+    context.lineWidth = 0.1;
+
+    for (const obstacle of obstacles) {
+        const { position, radius } = obstacle;
+        const [x, y] = position;
+
+        context.save();
+        context.translate(baseX - x, baseY - y)
+        context.beginPath();
+        context.arc(0,0, radius, 0, Math.PI * 2);
+        context.fill();
+        context.stroke();
+        context.restore();
+    }
+
+    context.restore()
+}
+
+function drawProximityValues(context: CanvasRenderingContext2D, proximityValues: number[]) {
+    context.save()
+    context.translate(context.canvas.width / 2, context.canvas.height / 2);
+
+    for (let i = 0; i < proximityValues.length; i++) {
+        const distance = proximityValues[i];
+
+        const directionAngleInRadiant = ((Math.PI * 2) / proximityValues.length) * i;
+
+        context.save();
+        context.rotate(directionAngleInRadiant);
+        context.translate(0, -distance * SCALE);
+
+        if (Math.floor(distance + 0.001) === MAX_PROXIMITY_DISTANCE) {
+            context.fillStyle = 'darkorange';
+            context.fillRect(-0.5, -0.5, 1, 1);
+        } else {
+            context.fillStyle = 'orange';
+            context.fillRect(-1, -1, 2, 2);
+        }
+
+        context.restore();
+    }
+
+    context.restore()
+}
+
 function drawCompass(context: CanvasRenderingContext2D, {angle}: Rover, radius: number, color: string) {
     context.save();
     context.translate(context.canvas.width / 2, context.canvas.height / 2);
@@ -169,7 +230,10 @@ export default function render(
     rover: Rover,
     trace: Array<Point>,
     markers: Array<Marker>,
-    options: RenderingOptions) {
+    obstacles: Array<Obstacle>,
+    proximityValues: Array<number>,
+    options: RenderingOptions,
+) {
 
     const {
         height = 500,
@@ -223,6 +287,8 @@ export default function render(
 
     // Restore transform
     context.restore();
+    drawObstacles(context, rover, obstacles);
+    drawProximityValues(context, proximityValues);
 
     if (showCompass) {
         drawCompass(context, rover, radius, colorCompass);
