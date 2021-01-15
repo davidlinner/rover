@@ -31,12 +31,12 @@ const INITIAL_WHEEL_CONSTRAINTS: Array<{ localPosition: [number, number], brakeF
     {
         localPosition: [0.25, 0.25],
         brakeForce: 0.5,
-        sideFriction: 0.5
+        sideFriction: 0.1
     },
     {
         localPosition: [-0.25, 0.25],
         brakeForce: 0.5,
-        sideFriction: 0.5
+        sideFriction: 0.01
     },
     {
         localPosition: [0.25, 0],
@@ -51,12 +51,12 @@ const INITIAL_WHEEL_CONSTRAINTS: Array<{ localPosition: [number, number], brakeF
     {
         localPosition: [0.25, -0.25],
         brakeForce: 0.5,
-        sideFriction: 0.5
+        sideFriction: 0.1
     },
     {
         localPosition: [-0.25, -0.25],
         brakeForce: 0.5,
-        sideFriction: 0.5
+        sideFriction: 0.1
     },
 ]
 
@@ -96,7 +96,7 @@ class Simulation {
     private rover: p2.Body
 
     private wheelConstraints: Array<p2.WheelConstraint>
-    private engines;
+    private engines: Array<number>;
 
     private readonly loop: ControlLoop
 
@@ -174,7 +174,7 @@ class Simulation {
         this.rover = rover;
         this.wheelConstraints = wheelConstraints;
         this.vehicleOptions = vehicleOptions;
-        this.engines = Array.of({length: vehicleOptions.engineCount}, () => 0);
+        this.engines = Array.from({length: vehicleOptions.engineCount}, () => 0);
 
         this.context = context;
         this.renderingOptions = {
@@ -359,8 +359,6 @@ class Simulation {
                 if (engines[i] <= 1.0 && engines[i] >= -1.0) {
                     const errorFunction = errorEngine[i] || (v => v);
                     this.engines[i] = engines[i];
-
-                    console.log(BASE_ENGINE_FORCE * errorFunction(engines[i % engineCount]));
 
                     this.wheelConstraints[i].engineForce =
                         BASE_ENGINE_FORCE * errorFunction(engines[i % engineCount]);

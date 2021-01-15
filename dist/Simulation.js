@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Simulation = void 0;
+exports.Simulation = exports.MAX_PROXIMITY_DISTANCE = void 0;
 const p2_1 = __importDefault(require("p2"));
 const latlon_spherical_js_1 = __importDefault(require("geodesy/latlon-spherical.js"));
 const render_1 = __importDefault(require("./render"));
@@ -12,6 +12,7 @@ const Authenticity_1 = require("./Authenticity");
 const ROVER_WIDTH = .5;
 const ROVER_HEIGHT = 1.0;
 const MIN_TRACKING_POINT_DISTANCE = 1;
+exports.MAX_PROXIMITY_DISTANCE = 8;
 const MAX_SUB_STEPS = 5;
 const FIXED_DELTA_TIME = 1 / 60;
 const CONTROL_INTERVAL = 20;
@@ -20,12 +21,12 @@ const INITIAL_WHEEL_CONSTRAINTS = [
     {
         localPosition: [0.25, 0.25],
         brakeForce: 0.5,
-        sideFriction: 0.5
+        sideFriction: 0.1
     },
     {
         localPosition: [-0.25, 0.25],
         brakeForce: 0.5,
-        sideFriction: 0.5
+        sideFriction: 0.01
     },
     {
         localPosition: [0.25, 0],
@@ -40,23 +41,20 @@ const INITIAL_WHEEL_CONSTRAINTS = [
     {
         localPosition: [0.25, -0.25],
         brakeForce: 0.5,
-        sideFriction: 0.5
+        sideFriction: 0.1
     },
     {
         localPosition: [-0.25, -0.25],
         brakeForce: 0.5,
-        sideFriction: 0.5
+        sideFriction: 0.1
     },
 ];
 class Simulation {
     constructor(simulationOptions) {
-        this.engines = [
-            0, 0,
-            0, 0,
-            0, 0,
-        ];
         this.trace = [];
         this.markers = [];
+        this.obstacles = [];
+        this.proximityValues = [];
         this.lastRenderTime = 0;
         this.startTime = 0;
         this.interval = null;
@@ -74,9 +72,9 @@ class Simulation {
                 width: ROVER_WIDTH,
                 height: ROVER_HEIGHT,
                 wheelConstraints: this.wheelConstraints,
-            }, this.trace, this.markers, this.renderingOptions);
+            }, this.trace, this.markers, this.obstacles, this.proximityValues, this.renderingOptions);
         };
-        const { loop, element, renderingOptions = {}, physicalConstraints = Authenticity_1.AUTHENTICITY_LEVEL0, locationsOfInterest = [], vehicleOptions = { engineCount: 2 }, origin } = simulationOptions;
+        const { loop, element, renderingOptions = {}, physicalConstraints = Authenticity_1.AUTHENTICITY_LEVEL0, locationsOfInterest = [], vehicleOptions = { engineCount: 2 }, obstacles = [], origin, } = simulationOptions;
         const { height = 500, width = 500 } = renderingOptions;
         this.loop = loop;
         const canvas = this.createCanvas(element, width, height);
@@ -103,11 +101,14 @@ class Simulation {
         this.rover = rover;
         this.wheelConstraints = wheelConstraints;
         this.vehicleOptions = vehicleOptions;
+        this.engines = Array.from({ length: vehicleOptions.engineCount }, () => 0);
         this.context = context;
         this.renderingOptions = Object.assign(Object.assign({}, renderingOptions), { width,
             height });
         this.physicalOptions = physicalConstraints(vehicleOptions);
         this.offset = new latlon_spherical_js_1.default(origin.latitude, origin.longitude);
+        this.initObstacles(origin, obstacles);
+        this.updateProximityValues();
     }
     createCanvas(parent, width, height) {
         const document = parent.ownerDocument;
@@ -118,7 +119,6 @@ class Simulation {
         return canvas;
     }
     initMarkers(locationsOfInterest, origin) {
-        console.log('lois', locationsOfInterest);
         if (origin) {
             this.markers = locationsOfInterest.map(({ label, latitude, longitude }) => {
                 const marker = new latlon_spherical_js_1.default(latitude, longitude);
@@ -131,7 +131,50 @@ class Simulation {
                     label
                 };
             });
-            console.log(this.markers);
+        }
+    }
+    initObstacles(origin, obstacles) {
+        if (origin) {
+            this.obstacles = obstacles.map(({ radius, latitude, longitude }) => {
+                const obstacleLatLon = new latlon_spherical_js_1.default(latitude, longitude);
+                const x = obstacleLatLon.distanceTo(new latlon_spherical_js_1.default(latitude, origin.longitude));
+                const y = obstacleLatLon.distanceTo(new latlon_spherical_js_1.default(origin.latitude, longitude));
+                const obstacleShape = new p2_1.default.Circle({ radius });
+                const obstacleBody = new p2_1.default.Body({
+                    mass: 0,
+                    position: [x, y],
+                    angle: 0,
+                    angularVelocity: 0,
+                    fixedX: true,
+                    fixedY: true,
+                    fixedRotation: true,
+                    collisionResponse: true,
+                });
+                obstacleBody.addShape(obstacleShape);
+                this.world.addBody(obstacleBody);
+                return {
+                    position: [x, y],
+                    radius,
+                };
+            });
+        }
+    }
+    updateProximityValues() {
+        const { errorProximity = d => d } = this.physicalOptions;
+        const position = this.rover.interpolatedPosition;
+        const [baseX, baseY] = position;
+        const resolution = 180;
+        for (let index = 0; index < resolution; index++) {
+            const directionAngleInRadiant = (((Math.PI * 2) / resolution) * index) + this.rover.interpolatedAngle;
+            const xx = baseX + (exports.MAX_PROXIMITY_DISTANCE * Math.cos(directionAngleInRadiant + Math.PI / 2));
+            const yy = baseY + (exports.MAX_PROXIMITY_DISTANCE * Math.sin(directionAngleInRadiant + Math.PI / 2));
+            const to = [xx, yy];
+            const ray = new p2_1.default.Ray({ from: position, to, mode: p2_1.default.Ray.CLOSEST, skipBackfaces: true });
+            const rayResult = new p2_1.default.RaycastResult();
+            rayResult.reset();
+            this.world.raycast(rayResult, ray);
+            const rayDistance = errorProximity(Math.abs(rayResult.getHitDistance(ray)));
+            this.proximityValues[index] = rayDistance >= exports.MAX_PROXIMITY_DISTANCE - 0.01 ? -1 : rayDistance;
         }
     }
     getRoverHeading() {
@@ -160,9 +203,11 @@ class Simulation {
         const { engineCount } = this.vehicleOptions;
         this.interval = window.setInterval(() => {
             const clock = performance.now() - this.startTime;
+            this.updateProximityValues();
             const actuatorValues = this.loop({
                 heading: this.getRoverHeading(),
                 location: this.getRoverLocation(),
+                proximity: this.proximityValues,
                 clock,
             }, {
                 engines: this.engines
@@ -177,7 +222,6 @@ class Simulation {
                 if (engines[i] <= 1.0 && engines[i] >= -1.0) {
                     const errorFunction = errorEngine[i] || (v => v);
                     this.engines[i] = engines[i];
-                    console.log(BASE_ENGINE_FORCE * errorFunction(engines[i % engineCount]));
                     this.wheelConstraints[i].engineForce =
                         BASE_ENGINE_FORCE * errorFunction(engines[i % engineCount]);
                 }
