@@ -90,7 +90,7 @@ export interface SensorValues {
 
     /**
      * 360° distance values to obstacles in clockwise order. Sampling is done in 2° steps. Samples are given in meters.
-     * A sample of -1 means no obstacle.
+     * A sample of -1 means no obstacle in range of the proximity sensor.
      */
     proximity: Array<number>,
 
