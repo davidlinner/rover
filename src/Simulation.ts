@@ -9,7 +9,7 @@ import {
     Location,
     LocationOfInterest, PhysicalOptions,
     RenderingOptions,
-    SimulationOptions
+    SimulationOptions, VehicleOptions
 } from "./types";
 import {AUTHENTICITY_LEVEL0} from "./Authenticity";
 
@@ -23,7 +23,7 @@ const FIXED_DELTA_TIME = 1 / 60; // Physics "tick" delta time
 
 const CONTROL_INTERVAL = 20; //ms
 
-const BASE_ENGINE_FORCE = 1.0;
+const BASE_ENGINE_FORCE = 2.0;
 
 const INITIAL_WHEEL_CONSTRAINTS: Array<{ localPosition: [number, number], brakeForce: number, sideFriction: number }> = [
     {
@@ -109,6 +109,7 @@ class Simulation {
 
     private readonly renderingOptions: RenderingOptions;
     private readonly physicalOptions: PhysicalOptions;
+    private readonly vehicleOptions: VehicleOptions;
 
     private lastRenderTime: number = 0
     private startTime: number = 0
@@ -128,6 +129,7 @@ class Simulation {
             renderingOptions = {},
             physicalConstraints = AUTHENTICITY_LEVEL0,
             locationsOfInterest = [],
+            vehicleOptions = {engineCount: 2},
             origin
         } = simulationOptions;
 
@@ -171,6 +173,7 @@ class Simulation {
         this.world = world;
         this.rover = rover;
         this.wheelConstraints = wheelConstraints;
+        this.vehicleOptions = vehicleOptions;
 
         this.context = context;
         this.renderingOptions = {
@@ -179,7 +182,7 @@ class Simulation {
             height
         };
 
-        this.physicalOptions = physicalConstraints({engineCount:2}); // constant for the moment
+        this.physicalOptions = physicalConstraints(vehicleOptions); // constant for the moment
 
         this.offset = new LatLon(origin.latitude, origin.longitude);
     }
@@ -203,8 +206,8 @@ class Simulation {
                 const unsignedY = marker.distanceTo(new LatLon(origin.latitude, longitude));
 
                 // This seems rather hacky 😬
-                const signedX = unsignedX * ((origin.longitude - marker.longitude) > 0 ? 1 : -1);
-                const signedY = unsignedY * ((origin.latitude - marker.latitude) > 0 ? -1 : 1);
+                const signedX = unsignedX * (origin.longitude > marker.longitude ? 1 : -1);
+                const signedY = unsignedY * (origin.latitude > marker.latitude ? -1 : 1);
 
                 return {
                     position: [signedX, signedY],
@@ -223,10 +226,10 @@ class Simulation {
         if (heading < 0) {
             heading += 2 * Math.PI
         }
-        const trueHeading =  (180 / Math.PI) * heading;
+        const trueHeading = (180 / Math.PI) * heading;
 
         const {
-            errorHeading = d=>d
+            errorHeading = d => d
         } = this.physicalOptions;
 
         return errorHeading(trueHeading);
@@ -254,11 +257,13 @@ class Simulation {
      * Starts the simulation control loop at an interval less than 50ms.
      */
     start() {
-        if(this.interval){
+        if (this.interval) {
             throw new Error('Simulation is already running.')
         }
 
         this.startTime = performance.now();
+
+        const {engineCount} = this.vehicleOptions;
 
         this.interval = window.setInterval(() => {
 
@@ -279,41 +284,26 @@ class Simulation {
                 errorEngine = []
             } = this.physicalOptions;
 
-            if (engines.length === 2 || engines.length === 6) {
-                for(let i = 0; i < engines.length; i++){
-                    if(engines[i]<=1.0 && engines[i]>= -1.0){
+            if (engines.length !== engineCount) {
+                console.error(`${engines.length} power values passed, while vehicle has ${engineCount} engines.`);
+                return;
+            }
 
-                        // Setting engines with a length of 2 will be deprecated and is only to keep current algorithms working.
-                        if (engines.length === 2) {
-                            if (this.wheelConstraints[i].localPosition[0] > 0) {
-                                // Left Side
-                                this.engines[0] = engines[i];
-                                this.wheelConstraints[0].engineForce = BASE_ENGINE_FORCE * engines[i]
-                                this.engines[2] = engines[i];
-                                this.wheelConstraints[2].engineForce = BASE_ENGINE_FORCE * engines[i]
-                                this.engines[4] = engines[i];
-                                this.wheelConstraints[4].engineForce = BASE_ENGINE_FORCE * engines[i]
-                            } else {
-                                // Right Side
-                                this.engines[1] = engines[i];
-                                this.wheelConstraints[1].engineForce = BASE_ENGINE_FORCE * engines[i]
-                                this.engines[3] = engines[i];
-                                this.wheelConstraints[3].engineForce = BASE_ENGINE_FORCE * engines[i]
-                                this.engines[5] = engines[i];
-                                this.wheelConstraints[5].engineForce = BASE_ENGINE_FORCE * engines[i]
-                            }
-                        } else if (engines.length === 6) {
-                            this.engines[i] = engines[i];
-                            const errorFunction = errorEngine[i] || (v => v);
+            for (let i = 0; i < engines.length; i++) {
+                if (engines[i] <= 1.0 && engines[i] >= -1.0) {
+                    const errorFunction = errorEngine[i] || (v => v);
+                    this.engines[i] = engines[i];
 
-                            this.wheelConstraints[i].engineForce = BASE_ENGINE_FORCE * errorFunction(engines[i]);
-                        }
+                    console.log(BASE_ENGINE_FORCE * errorFunction(engines[i % engineCount]));
 
-                    } else {
-                        console.error('Wheel power out of range [-1.0 : 1.0]');
-                    }
+                    this.wheelConstraints[i].engineForce =
+                        BASE_ENGINE_FORCE * errorFunction(engines[i % engineCount]);
+
+                } else {
+                    console.error('Wheel power out of range [-1.0 : 1.0]');
                 }
             }
+
 
         }, CONTROL_INTERVAL);
 
@@ -344,7 +334,7 @@ class Simulation {
         }
     }
 
-    private animate = (time: number)  => {
+    private animate = (time: number) => {
         this.animationFrame = requestAnimationFrame(this.animate);
 
         // Get the elapsed time since last frame, in seconds

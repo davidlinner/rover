@@ -28,6 +28,11 @@ export interface SimulationOptions {
     physicalConstraints?: PhysicalConstraints
 
     /**
+     *
+     */
+    vehicleOptions?: VehicleOptions
+
+    /**
      * Parent element the generated canvas should be added to.
      */
     element: HTMLElement
@@ -37,7 +42,7 @@ export interface SimulationOptions {
  * Basic vehicle options
  */
 export interface VehicleOptions {
-    readonly engineCount: number
+    readonly engineCount: 2 | 6
 }
 
 /**

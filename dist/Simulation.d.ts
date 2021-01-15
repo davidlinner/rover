@@ -11,6 +11,7 @@ declare class Simulation {
     private markers;
     private readonly renderingOptions;
     private readonly physicalOptions;
+    private readonly vehicleOptions;
     private lastRenderTime;
     private startTime;
     private interval;
