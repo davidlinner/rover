@@ -9,10 +9,11 @@ export interface SimulationOptions {
     }>;
     renderingOptions: RenderingOptions;
     physicalConstraints?: PhysicalConstraints;
+    vehicleOptions?: VehicleOptions;
     element: HTMLElement;
 }
 export interface VehicleOptions {
-    readonly engineCount: number;
+    readonly engineCount: 2 | 6;
 }
 export interface Location {
     latitude: number;
@@ -28,7 +29,7 @@ export interface SensorValues {
     clock: number;
 }
 export interface ActuatorValues {
-    engines: Array<number>;
+    engines: [number, number] | [number, number, number, number, number, number];
 }
 declare type EngineError = (value: number) => number;
 declare type LocationError = (location: Location) => Location;

@@ -4,11 +4,12 @@ import LatLon from 'geodesy/latlon-spherical.js'
 import render, {Marker, Obstacle, Point} from "./render";
 import {distance} from "./tools";
 import {
+    ActuatorValues,
     ControlLoop,
     Location,
     LocationOfInterest, PhysicalOptions,
     RenderingOptions,
-    SimulationOptions
+    SimulationOptions, VehicleOptions
 } from "./types";
 import {AUTHENTICITY_LEVEL0} from "./Authenticity";
 
@@ -24,30 +25,38 @@ const FIXED_DELTA_TIME = 1 / 60; // Physics "tick" delta time
 
 const CONTROL_INTERVAL = 20; //ms
 
-const BASE_ENGINE_FORCE = 1.0;
+const BASE_ENGINE_FORCE = 2.0;
 
 const INITIAL_WHEEL_CONSTRAINTS: Array<{ localPosition: [number, number], brakeForce: number, sideFriction: number }> = [
     {
-        localPosition: [.25, 0],
+        localPosition: [0.25, 0.25],
         brakeForce: 0.5,
-        sideFriction: 3.0
+        sideFriction: 0.5
     },
     {
-        localPosition: [-.25, 0],
+        localPosition: [-0.25, 0.25],
         brakeForce: 0.5,
-        sideFriction: 3.0
-    },
-    // we add to stabilizing wheels which stops radial movement after the accelerating radial force is gone
-    // TODO: remove when a better physics engine or better parameterization for P2 is found
-    {
-        localPosition: [0, 0.25],
-        brakeForce: 0,
-        sideFriction: .075
+        sideFriction: 0.5
     },
     {
-        localPosition: [0, -0.25],
-        brakeForce: 0,
-        sideFriction: .075
+        localPosition: [0.25, 0],
+        brakeForce: 0.5,
+        sideFriction: 0.5
+    },
+    {
+        localPosition: [-0.25, 0],
+        brakeForce: 0.5,
+        sideFriction: 0.5
+    },
+    {
+        localPosition: [0.25, -0.25],
+        brakeForce: 0.5,
+        sideFriction: 0.5
+    },
+    {
+        localPosition: [-0.25, -0.25],
+        brakeForce: 0.5,
+        sideFriction: 0.5
     },
 ]
 
@@ -79,7 +88,6 @@ const INITIAL_WHEEL_CONSTRAINTS: Array<{ localPosition: [number, number], brakeF
  * ```
  *
  */
-
 class Simulation {
 
     private readonly context: CanvasRenderingContext2D
@@ -88,7 +96,7 @@ class Simulation {
     private rover: p2.Body
 
     private wheelConstraints: Array<p2.WheelConstraint>
-    private engines = [0,0]
+    private engines;
 
     private readonly loop: ControlLoop
 
@@ -101,6 +109,7 @@ class Simulation {
 
     private readonly renderingOptions: RenderingOptions;
     private readonly physicalOptions: PhysicalOptions;
+    private readonly vehicleOptions: VehicleOptions;
 
     private lastRenderTime: number = 0
     private startTime: number = 0
@@ -120,6 +129,7 @@ class Simulation {
             renderingOptions = {},
             physicalConstraints = AUTHENTICITY_LEVEL0,
             locationsOfInterest = [],
+            vehicleOptions = {engineCount: 2},
             obstacles = [],
             origin,
         } = simulationOptions;
@@ -163,6 +173,8 @@ class Simulation {
         this.world = world;
         this.rover = rover;
         this.wheelConstraints = wheelConstraints;
+        this.vehicleOptions = vehicleOptions;
+        this.engines = Array.of({length: vehicleOptions.engineCount}, () => 0);
 
         this.context = context;
         this.renderingOptions = {
@@ -171,7 +183,7 @@ class Simulation {
             height
         };
 
-        this.physicalOptions = physicalConstraints({engineCount:2}); // constant for the moment
+        this.physicalOptions = physicalConstraints(vehicleOptions); // constant for the moment
 
         this.offset = new LatLon(origin.latitude, origin.longitude);
 
@@ -191,13 +203,17 @@ class Simulation {
     private initMarkers(locationsOfInterest: Array<LocationOfInterest>, origin: Location) {
         if (origin) {
             this.markers = locationsOfInterest.map(({label, latitude, longitude}) => {
-                const markerLatLon = new LatLon(latitude, longitude);
+                const marker = new LatLon(latitude, longitude);
 
-                const x = markerLatLon.distanceTo(new LatLon(latitude, origin.longitude));
-                const y = markerLatLon.distanceTo(new LatLon(origin.latitude, longitude));
+                const unsignedX = marker.distanceTo(new LatLon(latitude, origin.longitude));
+                const unsignedY = marker.distanceTo(new LatLon(origin.latitude, longitude));
+
+                // This seems rather hacky 😬
+                const signedX = unsignedX * (origin.longitude > marker.longitude ? 1 : -1);
+                const signedY = unsignedY * (origin.latitude > marker.latitude ? -1 : 1);
 
                 return {
-                    position: [x, y],
+                    position: [signedX, signedY],
                     label
                 }
             })
@@ -273,7 +289,7 @@ class Simulation {
         if (heading < 0) {
             heading += 2 * Math.PI
         }
-        const trueHeading =  (180 / Math.PI) * heading;
+        const trueHeading = (180 / Math.PI) * heading;
 
         const {
             errorHeading = d => d
@@ -304,11 +320,13 @@ class Simulation {
      * Starts the simulation control loop at an interval less than 50ms.
      */
     start() {
-        if(this.interval){
+        if (this.interval) {
             throw new Error('Simulation is already running.')
         }
 
         this.startTime = performance.now();
+
+        const {engineCount} = this.vehicleOptions;
 
         this.interval = window.setInterval(() => {
 
@@ -332,17 +350,23 @@ class Simulation {
                 errorEngine = []
             } = this.physicalOptions;
 
-            if (engines.length === this.engines.length) {
-                for(let i = 0; i < engines.length; i++){
-                    if(engines[i]<=1.0 && engines[i]>= -1.0){
-                        this.engines[i] = engines[i];
+            if (engines.length !== engineCount) {
+                console.error(`${engines.length} power values passed, while vehicle has ${engineCount} engines.`);
+                return;
+            }
 
-                        const errorFunction = errorEngine[i] || (v=>v);
+            for (let i = 0; i < engines.length; i++) {
+                if (engines[i] <= 1.0 && engines[i] >= -1.0) {
+                    const errorFunction = errorEngine[i] || (v => v);
+                    this.engines[i] = engines[i];
 
-                        this.wheelConstraints[i].engineForce = BASE_ENGINE_FORCE * errorFunction(engines[i]);
-                    } else {
-                        console.error('Wheel power out of range [-1.0 : 1.0]');
-                    }
+                    console.log(BASE_ENGINE_FORCE * errorFunction(engines[i % engineCount]));
+
+                    this.wheelConstraints[i].engineForce =
+                        BASE_ENGINE_FORCE * errorFunction(engines[i % engineCount]);
+
+                } else {
+                    console.error('Wheel power out of range [-1.0 : 1.0]');
                 }
             }
 
@@ -375,7 +399,7 @@ class Simulation {
         }
     }
 
-    private animate = (time: number)  => {
+    private animate = (time: number) => {
         this.animationFrame = requestAnimationFrame(this.animate);
 
         // Get the elapsed time since last frame, in seconds
@@ -397,7 +421,8 @@ class Simulation {
                 position: this.rover.interpolatedPosition,
                 angle: this.rover.angle,
                 width: ROVER_WIDTH,
-                height: ROVER_HEIGHT
+                height: ROVER_HEIGHT,
+                wheelConstraints: this.wheelConstraints,
             },
             this.trace,
             this.markers,

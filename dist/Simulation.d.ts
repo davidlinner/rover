@@ -14,6 +14,7 @@ declare class Simulation {
     private proximityValues;
     private readonly renderingOptions;
     private readonly physicalOptions;
+    private readonly vehicleOptions;
     private lastRenderTime;
     private startTime;
     private interval;
