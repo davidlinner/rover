@@ -18,7 +18,7 @@ const FIXED_DELTA_TIME = 1 / 60;
 const CONTROL_INTERVAL = 20;
 const BASE_ENGINE_FORCE = 1.0;
 const WHEEL_BREAK_FORCE = 0.5;
-const WHEEL_SIDE_FRICTION = 0.5;
+const WHEEL_SIDE_FRICTION = 1.5;
 const INITIAL_WHEEL_CONSTRAINTS = [
     {
         localPosition: [0.25, 0.25],

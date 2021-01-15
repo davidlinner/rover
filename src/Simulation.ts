@@ -28,7 +28,7 @@ const CONTROL_INTERVAL = 20; //ms
 const BASE_ENGINE_FORCE = 1.0;
 
 const WHEEL_BREAK_FORCE = 0.5;
-const WHEEL_SIDE_FRICTION = 0.5;
+const WHEEL_SIDE_FRICTION = 1.5;
 
 const INITIAL_WHEEL_CONSTRAINTS: Array<{ localPosition: [number, number], brakeForce: number, sideFriction: number }> = [
 	{
