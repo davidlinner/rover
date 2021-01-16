@@ -1,11 +1,11 @@
 import { RenderingOptions } from './types';
-import { MAX_PROXIMITY_DISTANCE } from './Simulation';
+import {LANDMINE_RADIUS, MAX_PROXIMITY_DISTANCE} from './Simulation';
 import { WheelConstraint } from 'p2';
 
 const SCALE = 15;
 const GRID_GUTTER = 3;
 
-export type Point = [number, number];
+export type Point = [x: number, y: number];
 
 export interface Marker {
 	label: string;
@@ -15,6 +15,10 @@ export interface Marker {
 export interface Obstacle {
 	radius: number;
 	position: Point;
+}
+
+export interface Landmine {
+    position: Point
 }
 
 export interface Rover {
@@ -41,6 +45,36 @@ function drawRover(context: CanvasRenderingContext2D, { width, height, wheelCons
 		context.fillRect(x - wheelWidth / 2, y - wheelHeight / 2, wheelWidth, wheelHeight);
 		context.restore();
 	}
+}
+
+function drawLandmines(context: CanvasRenderingContext2D, {angle, position}: Rover, mines: Landmine[]) {
+	const roverX = position[0];
+	const roverY = position[1];
+
+	context.save();
+	context.translate(context.canvas.width / 2, context.canvas.height / 2); // Translate to the center
+	context.rotate(-angle); // Back to world space
+	context.translate(roverX * SCALE, roverY * SCALE); // Translate to the center
+
+	for (let mine of mines) {
+		context.save();
+
+		const { position } = mine;
+		const mineX = position[0] * SCALE;
+		const mineY = position[1] * -SCALE;
+		const mineSize = LANDMINE_RADIUS * SCALE;
+
+		context.translate(mineX, mineY);
+
+		context.fillStyle = 'red';
+		context.beginPath();
+		context.arc(0, 0, mineSize, 0, Math.PI * 2);
+		context.fill();
+
+		context.restore();
+	}
+
+	context.restore();
 }
 
 function drawPath(context: CanvasRenderingContext2D, { position, angle }: Rover, trace: Array<Point>, color: string) {
@@ -91,7 +125,7 @@ function drawMarkers(
 	for (let marker of markers) {
 		context.save();
 
-		const { position, label } = marker;
+		let { position, label } = marker;
 
 		const [markerX, markerY] = position;
 
@@ -118,7 +152,8 @@ function drawMarkers(
 		if (distance < maxDistance) {
 			const linearAlpha = Math.max(0, maxDistance - distance) / maxDistance;
 			context.globalAlpha = Math.min(linearAlpha * 8, 1);
-			context.fillText(label, 0, -1);
+			// label = `${label}[${markerX.toFixed(8)}, ${markerY.toFixed(8)}]`; // DEBUG
+			context.fillText(label, 0, -10);
 			context.globalAlpha = 1;
 		}
 
@@ -142,27 +177,30 @@ function drawObstacles(context: CanvasRenderingContext2D, { position, angle }: R
 	context.translate(context.canvas.width / 2, context.canvas.height / 2);
 	context.scale(SCALE, SCALE);
 	context.rotate(-angle);
-	context.fillStyle = 'rgba(255, 0, 0, 0.2)';
-	context.strokeStyle = 'rgba(255, 0, 0, 1)';
+	context.fillStyle = 'rgba(255, 255, 255, 0.2)';
+	context.strokeStyle = 'rgba(255, 255, 255, 1)';
 	context.lineWidth = 0.1;
 
 	for (const obstacle of obstacles) {
 		const { position, radius } = obstacle;
-		const [x, y] = position;
+		const x = position[0] * -1;
+		const y = position[1];
 
 		context.save();
+
 		context.translate(baseX - x, baseY - y);
 		context.beginPath();
 		context.arc(0, 0, radius, 0, Math.PI * 2);
 		context.fill();
 		context.stroke();
+
 		context.restore();
 	}
 
 	context.restore();
 }
 
-function drawObstacleRays(context: CanvasRenderingContext2D, proximityValues: number[]) {
+function drawProximityValues(context: CanvasRenderingContext2D, proximityValues: number[]) {
 	context.save();
 	context.translate(context.canvas.width / 2, context.canvas.height / 2);
 
@@ -255,6 +293,7 @@ export default function render(
 	trace: Array<Point>,
 	markers: Array<Marker>,
 	obstacles: Array<Obstacle>,
+	landmines: Array<Landmine>,
 	proximityValues: Array<number>,
 	options: RenderingOptions
 ) {
@@ -311,11 +350,12 @@ export default function render(
 	// Restore transform
 	context.restore();
 	drawObstacles(context, rover, obstacles);
-	drawObstacleRays(context, proximityValues);
+	drawProximityValues(context, proximityValues);
 
 	if (showCompass) {
 		drawCompass(context, rover, radius, colorCompass);
 	}
 
 	drawMarkers(context, rover, markers, radius, width, height, colorMarker);
+	drawLandmines(context, rover, landmines);
 }
