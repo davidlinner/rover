@@ -177,8 +177,8 @@ function drawObstacles(context: CanvasRenderingContext2D, { position, angle }: R
 	context.translate(context.canvas.width / 2, context.canvas.height / 2);
 	context.scale(SCALE, SCALE);
 	context.rotate(-angle);
-	context.fillStyle = 'rgba(255, 255, 255, 0.2)';
-	context.strokeStyle = 'rgba(255, 255, 255, 1)';
+	context.fillStyle = 'rgba(255, 255, 255, 0.15)';
+	context.strokeStyle = 'rgba(255, 255, 255, 0.3)';
 	context.lineWidth = 0.1;
 
 	for (const obstacle of obstacles) {
@@ -305,7 +305,7 @@ export default function render(
 		showCompass = true,
 		colorTrace = 'blue',
 		colorRover = 'red',
-		colorMarker = 'goldenrod',
+		colorMarker = 'CornflowerBlue',
 		colorGrid = 'lightgreen',
 		colorCompass = 'lime',
 	} = options;

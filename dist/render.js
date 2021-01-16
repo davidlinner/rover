@@ -18,7 +18,7 @@ function drawRover(context, { width, height, wheelConstraints }, color) {
         context.restore();
     }
 }
-function drawLandmines(context, { angle, position }, mines, radius) {
+function drawLandmines(context, { angle, position }, mines) {
     const roverX = position[0];
     const roverY = position[1];
     context.save();
@@ -105,8 +105,8 @@ function drawObstacles(context, { position, angle }, obstacles) {
     context.translate(context.canvas.width / 2, context.canvas.height / 2);
     context.scale(SCALE, SCALE);
     context.rotate(-angle);
-    context.fillStyle = 'rgba(255, 255, 255, 0.2)';
-    context.strokeStyle = 'rgba(255, 255, 255, 1)';
+    context.fillStyle = 'rgba(255, 255, 255, 0.15)';
+    context.strokeStyle = 'rgba(255, 255, 255, 0.3)';
     context.lineWidth = 0.1;
     for (const obstacle of obstacles) {
         const { position, radius } = obstacle;
@@ -190,7 +190,7 @@ function drawGrid(context, { position, angle }, rasterSize, color) {
     context.restore();
 }
 function render(context, rover, trace, markers, obstacles, landmines, proximityValues, options) {
-    const { height = 500, width = 500, showGrid = true, showTrace = true, showCompass = true, colorTrace = 'blue', colorRover = 'red', colorMarker = 'goldenrod', colorGrid = 'lightgreen', colorCompass = 'lime', } = options;
+    const { height = 500, width = 500, showGrid = true, showTrace = true, showCompass = true, colorTrace = 'blue', colorRover = 'red', colorMarker = 'CornflowerBlue', colorGrid = 'lightgreen', colorCompass = 'lime', } = options;
     context.fillStyle = 'black';
     context.fillRect(0, 0, width, height);
     context.save();
@@ -219,6 +219,6 @@ function render(context, rover, trace, markers, obstacles, landmines, proximityV
         drawCompass(context, rover, radius, colorCompass);
     }
     drawMarkers(context, rover, markers, radius, width, height, colorMarker);
-    drawLandmines(context, rover, landmines, radius);
+    drawLandmines(context, rover, landmines);
 }
 exports.default = render;
