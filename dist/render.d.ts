@@ -1,5 +1,5 @@
-import { RenderingOptions } from "./types";
-import { WheelConstraint } from "p2";
+import { RenderingOptions } from './types';
+import { WheelConstraint } from 'p2';
 export declare type Point = [number, number];
 export interface Marker {
     label: string;

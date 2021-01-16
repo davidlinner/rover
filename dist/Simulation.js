@@ -11,52 +11,36 @@ const tools_1 = require("./tools");
 const Authenticity_1 = require("./Authenticity");
 const ROVER_WIDTH = .5;
 const ROVER_HEIGHT = 1.0;
+const ROVER_MASS = 10;
 const MIN_TRACKING_POINT_DISTANCE = 1;
 exports.MAX_PROXIMITY_DISTANCE = 8;
 const MAX_SUB_STEPS = 5;
 const FIXED_DELTA_TIME = 1 / 60;
 const CONTROL_INTERVAL = 20;
-const BASE_ENGINE_FORCE = 1.0;
-const WHEEL_BREAK_FORCE = 0.5;
-const WHEEL_SIDE_FRICTION = 0.5;
+const BASE_ENGINE_FORCE = 7.0;
+const WHEEL_BREAK_FORCE = BASE_ENGINE_FORCE * 0.5;
+const WHEEL_SIDE_FRICTION = BASE_ENGINE_FORCE * 2;
 const INITIAL_WHEEL_CONSTRAINTS = [
     {
-        localPosition: [0.25, 0.25],
+        localPosition: [0, 0.5],
         brakeForce: WHEEL_BREAK_FORCE,
-        sideFriction: WHEEL_SIDE_FRICTION,
+        sideFriction: WHEEL_SIDE_FRICTION
     },
     {
-        localPosition: [-0.25, 0.25],
+        localPosition: [0, -0.5],
         brakeForce: WHEEL_BREAK_FORCE,
-        sideFriction: WHEEL_SIDE_FRICTION,
-    },
-    {
-        localPosition: [0.25, 0],
-        brakeForce: WHEEL_BREAK_FORCE,
-        sideFriction: WHEEL_SIDE_FRICTION,
-    },
-    {
-        localPosition: [-0.25, 0],
-        brakeForce: WHEEL_BREAK_FORCE,
-        sideFriction: WHEEL_SIDE_FRICTION,
-    },
-    {
-        localPosition: [0.25, -0.25],
-        brakeForce: WHEEL_BREAK_FORCE,
-        sideFriction: WHEEL_SIDE_FRICTION,
-    },
-    {
-        localPosition: [-0.25, -0.25],
-        brakeForce: WHEEL_BREAK_FORCE,
-        sideFriction: WHEEL_SIDE_FRICTION,
-    },
+        sideFriction: WHEEL_SIDE_FRICTION
+    }
 ];
 class Simulation {
     constructor(simulationOptions) {
         this.engines = [
-            0, 0,
-            0, 0,
-            0, 0,
+            0,
+            0,
+        ];
+        this.steering = [
+            180,
+            180,
         ];
         this.trace = [];
         this.markers = [];
@@ -78,10 +62,10 @@ class Simulation {
                 angle: this.rover.angle,
                 width: ROVER_WIDTH,
                 height: ROVER_HEIGHT,
-                wheelConstraints: this.wheelConstraints,
+                wheelConstraints: this.wheelConstraints
             }, this.trace, this.markers, this.obstacles, this.proximityValues, this.renderingOptions);
         };
-        const { loop, element, renderingOptions = {}, physicalConstraints = Authenticity_1.AUTHENTICITY_LEVEL0, locationsOfInterest = [], obstacles = [], origin, } = simulationOptions;
+        const { loop, element, renderingOptions = {}, physicalConstraints = Authenticity_1.AUTHENTICITY_LEVEL0, locationsOfInterest = [], obstacles = [], origin } = simulationOptions;
         const { height = 500, width = 500 } = renderingOptions;
         this.loop = loop;
         const canvas = this.createCanvas(element, width, height);
@@ -93,7 +77,7 @@ class Simulation {
         const world = new p2_1.default.World({
             gravity: [0, 0]
         });
-        const rover = new p2_1.default.Body({ mass: 1 });
+        const rover = new p2_1.default.Body({ mass: ROVER_MASS });
         rover.addShape(new p2_1.default.Box({ width: ROVER_WIDTH, height: ROVER_HEIGHT }));
         world.addBody(rover);
         const vehicle = new p2_1.default.TopDownVehicle(rover);
@@ -155,13 +139,13 @@ class Simulation {
                     fixedX: true,
                     fixedY: true,
                     fixedRotation: true,
-                    collisionResponse: true,
+                    collisionResponse: true
                 });
                 obstacleBody.addShape(obstacleShape);
                 this.world.addBody(obstacleBody);
                 return {
                     position: [signedX, signedY],
-                    radius,
+                    radius
                 };
             });
         }
@@ -217,43 +201,36 @@ class Simulation {
                 heading: this.getRoverHeading(),
                 location: this.getRoverLocation(),
                 proximity: this.proximityValues,
-                clock,
+                clock
             }, {
-                engines: this.engines
+                engines: this.engines,
+                steering: this.steering
             });
-            const { engines, } = actuatorValues;
+            const { engines, steering } = actuatorValues;
             const { errorEngine = [] } = this.physicalOptions;
-            if (engines.length === 2 || engines.length === 6) {
+            if (engines.length === 2) {
                 for (let i = 0; i < engines.length; i++) {
                     if (engines[i] <= 1.0 && engines[i] >= -1.0) {
-                        if (engines.length === 2) {
-                            if (this.wheelConstraints[i].localPosition[0] > 0) {
-                                this.engines[0] = engines[i];
-                                this.wheelConstraints[0].engineForce = BASE_ENGINE_FORCE * engines[i];
-                                this.engines[2] = engines[i];
-                                this.wheelConstraints[2].engineForce = BASE_ENGINE_FORCE * engines[i];
-                                this.engines[4] = engines[i];
-                                this.wheelConstraints[4].engineForce = BASE_ENGINE_FORCE * engines[i];
-                            }
-                            else {
-                                this.engines[1] = engines[i];
-                                this.wheelConstraints[1].engineForce = BASE_ENGINE_FORCE * engines[i];
-                                this.engines[3] = engines[i];
-                                this.wheelConstraints[3].engineForce = BASE_ENGINE_FORCE * engines[i];
-                                this.engines[5] = engines[i];
-                                this.wheelConstraints[5].engineForce = BASE_ENGINE_FORCE * engines[i];
-                            }
-                        }
-                        else if (engines.length === 6) {
-                            this.engines[i] = engines[i];
-                            const errorFunction = errorEngine[i] || (v => v);
-                            this.wheelConstraints[i].engineForce = BASE_ENGINE_FORCE * errorFunction(engines[i]);
-                        }
+                        this.engines[i] = engines[i];
+                        const errorFunction = errorEngine[i] || (v => v);
+                        this.wheelConstraints[i].engineForce = BASE_ENGINE_FORCE * errorFunction(engines[i]);
                     }
                     else {
                         console.error('Wheel power out of range [-1.0 : 1.0]');
                     }
                 }
+            }
+            if (steering.length === 2) {
+                steering.forEach((steeringValue, index) => {
+                    if (steeringValue >= 0 || steeringValue <= 360) {
+                        const mappedSteeringValue = (steeringValue - 180) * Math.PI / 180;
+                        this.steering[index] = steeringValue;
+                        this.wheelConstraints[index].steerValue = mappedSteeringValue;
+                    }
+                    else {
+                        console.error('Steering value out of range [0 : 360]');
+                    }
+                });
             }
         }, CONTROL_INTERVAL);
         this.animationFrame = requestAnimationFrame(this.animate);

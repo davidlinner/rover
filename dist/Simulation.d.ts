@@ -1,4 +1,4 @@
-import { Location, SimulationOptions } from "./types";
+import { Location, SimulationOptions } from './types';
 export declare const MAX_PROXIMITY_DISTANCE = 8;
 declare class Simulation {
     readonly context: CanvasRenderingContext2D;
@@ -6,6 +6,7 @@ declare class Simulation {
     private rover;
     private wheelConstraints;
     private engines;
+    private steering;
     private readonly loop;
     private offset;
     private trace;

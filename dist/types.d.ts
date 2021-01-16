@@ -28,7 +28,8 @@ export interface SensorValues {
     clock: number;
 }
 export interface ActuatorValues {
-    engines: [number, number] | [number, number, number, number, number, number];
+    engines: [number, number];
+    steering: [number, number];
 }
 declare type EngineError = (value: number) => number;
 declare type LocationError = (location: Location) => Location;
