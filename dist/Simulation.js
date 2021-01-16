@@ -11,42 +11,23 @@ const tools_1 = require("./tools");
 const Authenticity_1 = require("./Authenticity");
 const ROVER_WIDTH = .5;
 const ROVER_HEIGHT = 1.0;
+const ROVER_MASS = 10;
 const MIN_TRACKING_POINT_DISTANCE = 1;
 exports.MAX_PROXIMITY_DISTANCE = 8;
 const MAX_SUB_STEPS = 5;
 const FIXED_DELTA_TIME = 1 / 60;
 const CONTROL_INTERVAL = 20;
-const BASE_ENGINE_FORCE = 1.0;
-const WHEEL_BREAK_FORCE = 0.5;
-const WHEEL_SIDE_FRICTION = 1.5;
+const BASE_ENGINE_FORCE = 7.0;
+const WHEEL_BREAK_FORCE = BASE_ENGINE_FORCE * 0.5;
+const WHEEL_SIDE_FRICTION = BASE_ENGINE_FORCE * 2;
 const INITIAL_WHEEL_CONSTRAINTS = [
     {
-        localPosition: [0.25, 0.25],
+        localPosition: [0, 0.5],
         brakeForce: WHEEL_BREAK_FORCE,
         sideFriction: WHEEL_SIDE_FRICTION
     },
     {
-        localPosition: [-0.25, 0.25],
-        brakeForce: WHEEL_BREAK_FORCE,
-        sideFriction: WHEEL_SIDE_FRICTION
-    },
-    {
-        localPosition: [0.25, 0],
-        brakeForce: WHEEL_BREAK_FORCE,
-        sideFriction: WHEEL_SIDE_FRICTION
-    },
-    {
-        localPosition: [-0.25, 0],
-        brakeForce: WHEEL_BREAK_FORCE,
-        sideFriction: WHEEL_SIDE_FRICTION
-    },
-    {
-        localPosition: [0.25, -0.25],
-        brakeForce: WHEEL_BREAK_FORCE,
-        sideFriction: WHEEL_SIDE_FRICTION
-    },
-    {
-        localPosition: [-0.25, -0.25],
+        localPosition: [0, -0.5],
         brakeForce: WHEEL_BREAK_FORCE,
         sideFriction: WHEEL_SIDE_FRICTION
     }
@@ -54,13 +35,12 @@ const INITIAL_WHEEL_CONSTRAINTS = [
 class Simulation {
     constructor(simulationOptions) {
         this.engines = [
-            0, 0,
-            0, 0,
-            0, 0
+            0,
+            0,
         ];
         this.steering = [
-            180, 180,
-            180, 180
+            180,
+            180,
         ];
         this.trace = [];
         this.markers = [];
@@ -97,7 +77,7 @@ class Simulation {
         const world = new p2_1.default.World({
             gravity: [0, 0]
         });
-        const rover = new p2_1.default.Body({ mass: 1 });
+        const rover = new p2_1.default.Body({ mass: ROVER_MASS });
         rover.addShape(new p2_1.default.Box({ width: ROVER_WIDTH, height: ROVER_HEIGHT }));
         world.addBody(rover);
         const vehicle = new p2_1.default.TopDownVehicle(rover);
@@ -228,7 +208,7 @@ class Simulation {
             });
             const { engines, steering } = actuatorValues;
             const { errorEngine = [] } = this.physicalOptions;
-            if (engines.length === 6) {
+            if (engines.length === 2) {
                 for (let i = 0; i < engines.length; i++) {
                     if (engines[i] <= 1.0 && engines[i] >= -1.0) {
                         this.engines[i] = engines[i];
@@ -240,7 +220,7 @@ class Simulation {
                     }
                 }
             }
-            if (steering.length === 4) {
+            if (steering.length === 2) {
                 steering.forEach((steeringValue, index) => {
                     if (steeringValue >= 0 || steeringValue <= 360) {
                         const mappedSteeringValue = (steeringValue - 180) * Math.PI / 180;
