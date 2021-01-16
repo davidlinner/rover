@@ -7,6 +7,10 @@ export interface SimulationOptions {
         longitude: number;
         radius: number;
     }>;
+    landmines?: Array<{
+        latitude: number;
+        longitude: number;
+    }>;
     renderingOptions: RenderingOptions;
     physicalConstraints?: PhysicalConstraints;
     element: HTMLElement;

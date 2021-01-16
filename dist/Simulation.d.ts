@@ -1,4 +1,5 @@
 import { Location, SimulationOptions } from './types';
+export declare const LANDMINE_RADIUS = 0.15;
 export declare const MAX_PROXIMITY_DISTANCE = 8;
 declare class Simulation {
     readonly context: CanvasRenderingContext2D;
@@ -13,6 +14,7 @@ declare class Simulation {
     private markers;
     private obstacles;
     private proximityValues;
+    private landmines;
     private readonly renderingOptions;
     private readonly physicalOptions;
     private lastRenderTime;
@@ -20,8 +22,10 @@ declare class Simulation {
     private interval;
     private animationFrame;
     constructor(simulationOptions: SimulationOptions);
-    private createCanvas;
+    private static createCanvas;
+    private static toRelativeOffset;
     private initMarkers;
+    private initLandmines;
     private initObstacles;
     private updateProximityValues;
     getRoverHeading(): number;

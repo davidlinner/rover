@@ -1,7 +1,7 @@
 import p2 from 'p2';
 import LatLon from 'geodesy/latlon-spherical.js';
 
-import render, { Marker, Obstacle, Point } from './render';
+import render, { Landmine, Marker, Obstacle, Point } from './render';
 import { distance } from './tools';
 import {
 	ActuatorValues,
@@ -16,6 +16,8 @@ import { AUTHENTICITY_LEVEL0 } from './Authenticity';
 const ROVER_WIDTH = .5;
 const ROVER_HEIGHT = 1.0;
 const ROVER_MASS = 10;
+
+export const LANDMINE_RADIUS = 0.15;
 
 const MIN_TRACKING_POINT_DISTANCE = 1;
 
@@ -100,6 +102,7 @@ class Simulation {
 	private markers: Array<Marker> = [];
 	private obstacles: Array<Obstacle> = [];
 	private proximityValues: Array<number> = [];
+    private landmines: Array<Landmine> = [];
 
 	private readonly renderingOptions: RenderingOptions;
 	private readonly physicalOptions: PhysicalOptions;
@@ -116,15 +119,16 @@ class Simulation {
 	 */
 	constructor(simulationOptions: SimulationOptions) {
 
-		const {
-			loop,
-			element,
-			renderingOptions = {},
-			physicalConstraints = AUTHENTICITY_LEVEL0,
-			locationsOfInterest = [],
-			obstacles = [],
-			origin
-		} = simulationOptions;
+        const {
+            loop,
+            element,
+            renderingOptions = {},
+            physicalConstraints = AUTHENTICITY_LEVEL0,
+            locationsOfInterest = [],
+            obstacles = [],
+            landmines = [],
+            origin,
+        } = simulationOptions;
 
 		const {
 			height = 500,
@@ -133,12 +137,12 @@ class Simulation {
 
 		this.loop = loop;
 
-		// Init canvas
-		const canvas = this.createCanvas(element, width, height);
-		const context = canvas.getContext('2d');
-		if (!context) {
-			throw new Error('Cannot create 2D rendering context for canvas.');
-		}
+        // Init canvas
+        const canvas = Simulation.createCanvas(element, width, height);
+        const context = canvas.getContext('2d');
+        if (!context) {
+            throw new Error('Cannot create 2D rendering context for canvas.');
+        }
 
 		this.initMarkers(locationsOfInterest, origin);
 		// Init P2 physics engine
@@ -177,71 +181,96 @@ class Simulation {
 
 		this.offset = new LatLon(origin.latitude, origin.longitude);
 
-		this.initObstacles(origin, obstacles);
-		this.updateProximityValues();
-	}
+        this.initObstacles(origin, obstacles);
+        this.initLandmines(origin, landmines);
+        this.updateProximityValues();
+    }
 
-	private createCanvas(parent: HTMLElement, width: number, height: number): HTMLCanvasElement {
-		const document = parent.ownerDocument;
-		const canvas = document.createElement('canvas');
-		canvas.width = width;
-		canvas.height = height;
-		parent.appendChild(canvas);
-		return canvas;
-	}
+    private static createCanvas(parent: HTMLElement, width: number, height: number): HTMLCanvasElement {
+        const document = parent.ownerDocument;
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        parent.appendChild(canvas);
+        return canvas;
+    }
 
-	private initMarkers(locationsOfInterest: Array<LocationOfInterest>, origin: Location) {
-		if (origin) {
-			this.markers = locationsOfInterest.map(({ label, latitude, longitude }) => {
-				const marker = new LatLon(latitude, longitude);
+    private static toRelativeOffset(origin: Location, position: Location): [x: number, y: number] {
+        const pos = new LatLon(position.latitude, position.longitude);
 
-				const unsignedX = marker.distanceTo(new LatLon(latitude, origin.longitude));
-				const unsignedY = marker.distanceTo(new LatLon(origin.latitude, longitude));
+        const unsignedX = pos.distanceTo(new LatLon(pos.latitude, origin.longitude));
+        const unsignedY = pos.distanceTo(new LatLon(origin.latitude, pos.longitude));
 
-				const signedX = unsignedX * ((origin.longitude - marker.longitude) > 0 ? -1 : 1);
-				const signedY = unsignedY * ((origin.latitude - marker.latitude) > 0 ? -1 : 1);
+        const signedX = unsignedX * ((origin.longitude - pos.longitude) > 0 ? -1 : 1);
+        const signedY = unsignedY * ((origin.latitude - pos.latitude) > 0 ? -1 : 1);
 
-				return {
-					position: [signedX, signedY],
-					label
-				};
-			});
-		}
-	}
+        return [signedX, signedY];
+    }
 
-	private initObstacles(origin: Location, obstacles: Array<{ latitude: number, longitude: number, radius: number }>) {
-		if (origin) {
-			this.obstacles = obstacles.map(({ radius, latitude, longitude }) => {
-				const obstacleLatLon = new LatLon(latitude, longitude);
+    private initMarkers(locationsOfInterest: Array<LocationOfInterest>, origin: Location) {
+        if (origin) {
+            this.markers = locationsOfInterest.map((marker) => {
+                const [x, y] = Simulation.toRelativeOffset(origin, marker)
+                console.log('MARK ', x.toFixed(6), y.toFixed(6))
 
-				const unsignedX = obstacleLatLon.distanceTo(new LatLon(latitude, origin.longitude));
-				const unsignedY = obstacleLatLon.distanceTo(new LatLon(origin.latitude, longitude));
+                return {
+                    position: [x, y],
+                    label: marker.label
+                }
+            })
+        }
+    }
 
-				const signedX = unsignedX * ((origin.longitude - obstacleLatLon.longitude) > 0 ? -1 : 1);
-				const signedY = unsignedY * ((origin.latitude - obstacleLatLon.latitude) > 0 ? -1 : 1);
+    private initLandmines(origin: Location, landmines: Array<{ latitude: number, longitude: number }>) {
+        if (origin) {
+            this.landmines = landmines.map((mine) => {
+                const [x, y] = Simulation.toRelativeOffset(origin, mine);
 
-				const obstacleShape = new p2.Circle({ radius });
-				const obstacleBody = new p2.Body({
-					mass: 0, // static
-					position: [signedX, signedY],
-					angle: 0,
-					angularVelocity: 0,
-					fixedX: true,
-					fixedY: true,
-					fixedRotation: true,
-					collisionResponse: true
-				});
-				obstacleBody.addShape(obstacleShape);
+                const mineShape = new p2.Circle({radius: LANDMINE_RADIUS, sensor: true, collisionResponse: false})
+                const mineBody = new p2.Body({
+                    mass: 0,
+                    position: [-x, y],
+                    fixedX: true,
+                    fixedY: true,
+                    fixedRotation: true,
+                    collisionResponse: false,
+                })
+
+                mineBody.addShape(mineShape);
+                this.world.addBody(mineBody)
+
+                return {position: [x, y]}
+            })
+        }
+    }
+
+    private initObstacles(origin: Location, obstacles: Array<{ latitude: number, longitude: number, radius: number }>) {
+        if (origin) {
+            this.obstacles = obstacles.map((obstacle) => {
+                const [x, y] = Simulation.toRelativeOffset(origin, obstacle);
+
+                const obstacleShape = new p2.Circle({radius: obstacle.radius})
+                const obstacleBody = new p2.Body({
+                    mass: 0, // static
+                    position: [-x, y],
+                    angle: 0,
+                    angularVelocity: 0,
+                    fixedX: true,
+                    fixedY: true,
+                    fixedRotation: true,
+                    collisionResponse: true,
+                });
+                obstacleBody.addShape(obstacleShape);
 
 				this.world.addBody(obstacleBody);
 
-				return {
-					position: [signedX, signedY],
-					radius
-				};
-			});
-		}
-	}
+                return {
+                    position: [x, y],
+                    radius: obstacle.radius,
+                }
+            })
+        }
+    }
 
 	private updateProximityValues() {
 		const {
@@ -267,11 +296,7 @@ class Simulation {
 			rayResult.reset();
 			// Possible improvement: Only traverse through obstacles
 			this.world.raycast(rayResult, ray);
-			let rayDistance = rayResult.getHitDistance(ray);
-
-			if (rayDistance < 0) {
-				rayDistance = rayDistance * -1;
-			}
+			let rayDistance = Math.abs(rayResult.getHitDistance(ray));
 
 			this.proximityValues[index] = errorProximity(rayDistance);
 		}
@@ -414,23 +439,24 @@ class Simulation {
 
 		this.trackPosition();
 
-		// Render scene
-		render(
-			this.context,
-			{
-				position: this.rover.interpolatedPosition,
-				angle: this.rover.angle,
-				width: ROVER_WIDTH,
-				height: ROVER_HEIGHT,
-				wheelConstraints: this.wheelConstraints
-			},
-			this.trace,
-			this.markers,
-			this.obstacles,
-			this.proximityValues,
-			this.renderingOptions
-		);
-	};
+        // Render scene
+        render(
+            this.context,
+            {
+                position: this.rover.interpolatedPosition,
+                angle: this.rover.angle,
+                width: ROVER_WIDTH,
+                height: ROVER_HEIGHT,
+                wheelConstraints: this.wheelConstraints,
+            },
+            this.trace,
+            this.markers,
+            this.obstacles,
+            this.landmines,
+            this.proximityValues,
+            this.renderingOptions,
+        );
+    }
 }
 
 export { Simulation, SimulationOptions };

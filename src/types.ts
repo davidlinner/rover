@@ -24,6 +24,11 @@ export interface SimulationOptions {
     obstacles?: Array<{ latitude: number, longitude: number, radius: number }>
 
     /**
+     * Landmines that emit a trigger event when touched
+     */
+	landmines?: Array<{ latitude: number, longitude: number}>
+
+    /**
      * Additional options for the visualization.
      */
     renderingOptions: RenderingOptions
