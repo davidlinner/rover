@@ -88,6 +88,7 @@
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="actuatorvalues.html#engines" class="tsd-kind-icon">engines</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="actuatorvalues.html#steering" class="tsd-kind-icon">steering</a></li>
 							</ul>
 						</section>
 					</div>
@@ -98,10 +99,10 @@
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
 					<a name="engines" class="tsd-anchor"></a>
 					<h3>engines</h3>
-					<div class="tsd-signature tsd-kind-icon">engines<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">[]</span></div>
+					<div class="tsd-signature tsd-kind-icon">engines<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">]</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/marcelxpfeifer/rover/blob/13f0542/src/types.ts#L92">types.ts:92</a></li>
+							<li>Defined in <a href="https://github.com/lscheibel/rover/blob/9aed890/src/types.ts#L110">types.ts:110</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -110,6 +111,16 @@
 							be in the range [-1.0 : 1.0], where 0 means the vehicle is at rest.</p>
 						</div>
 					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="steering" class="tsd-anchor"></a>
+					<h3>steering</h3>
+					<div class="tsd-signature tsd-kind-icon">steering<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">]</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/lscheibel/rover/blob/9aed890/src/types.ts#L111">types.ts:111</a></li>
+						</ul>
+					</aside>
 				</section>
 			</section>
 		</div>
@@ -133,6 +144,9 @@
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
 								<a href="actuatorvalues.html#engines" class="tsd-kind-icon">engines</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="actuatorvalues.html#steering" class="tsd-kind-icon">steering</a>
 							</li>
 						</ul>
 					</li>
@@ -165,6 +179,12 @@
 					<li class=" tsd-kind-type-alias">
 						<a href="../index.html#physicalconstraints" class="tsd-kind-icon">Physical<wbr>Constraints</a>
 					</li>
+					<li class=" tsd-kind-variable">
+						<a href="../index.html#landmine_radius" class="tsd-kind-icon">LANDMINE_<wbr>RADIUS</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="../index.html#max_proximity_distance" class="tsd-kind-icon">MAX_<wbr>PROXIMITY_<wbr>DISTANCE</a>
+					</li>
 					<li class=" tsd-kind-function">
 						<a href="../index.html#authenticity_level0" class="tsd-kind-icon">AUTHENTICITY_<wbr>LEVEL0</a>
 					</li>
@@ -185,6 +205,7 @@
 		<div class="tsd-legend-group">
 			<ul class="tsd-legend">
 				<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li>
 				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
 			</ul>
 			<ul class="tsd-legend">
