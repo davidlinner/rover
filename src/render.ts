@@ -117,7 +117,7 @@ function drawMarkers(
 	context.translate(width / 2, height / 2); // Translate to the center
 	context.rotate(-angle); // Back to world space
 
-	context.font = '24px sans-serif';
+	context.font = '21px monospace';
 	context.fillStyle = color;
 	context.textAlign = 'center';
 
@@ -158,7 +158,7 @@ function drawMarkers(
 		}
 
 		context.beginPath();
-		context.arc(0, 0, 5, 0, Math.PI * 2);
+		context.arc(0, 0, 2.5, 0, Math.PI * 2);
 		context.fill();
 		context.restore();
 

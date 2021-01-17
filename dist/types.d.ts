@@ -13,11 +13,10 @@ export interface SimulationOptions {
     }>;
     renderingOptions: RenderingOptions;
     physicalConstraints?: PhysicalConstraints;
-    vehicleOptions?: VehicleOptions;
     element: HTMLElement;
 }
 export interface VehicleOptions {
-    readonly engineCount: 2 | 6;
+    readonly engineCount: number;
 }
 export interface Location {
     latitude: number;

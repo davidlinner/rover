@@ -64,7 +64,7 @@ function drawMarkers(context, { position, angle }, markers, radius, width, heigh
     context.save();
     context.translate(width / 2, height / 2);
     context.rotate(-angle);
-    context.font = '24px sans-serif';
+    context.font = '21px monospace';
     context.fillStyle = color;
     context.textAlign = 'center';
     let index = 0;
@@ -91,7 +91,7 @@ function drawMarkers(context, { position, angle }, markers, radius, width, heigh
             context.globalAlpha = 1;
         }
         context.beginPath();
-        context.arc(0, 0, 5, 0, Math.PI * 2);
+        context.arc(0, 0, 2.5, 0, Math.PI * 2);
         context.fill();
         context.restore();
         index++;
