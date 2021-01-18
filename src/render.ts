@@ -1,5 +1,5 @@
 import { RenderingOptions } from './types';
-import {LANDMINE_RADIUS, MAX_PROXIMITY_DISTANCE} from './Simulation';
+import { LANDMINE_RADIUS, MAX_PROXIMITY_DISTANCE } from './Simulation';
 import { WheelConstraint } from 'p2';
 
 const SCALE = 15;
@@ -18,7 +18,7 @@ export interface Obstacle {
 }
 
 export interface Landmine {
-    position: Point
+	position: Point;
 }
 
 export interface Rover {
@@ -47,7 +47,7 @@ function drawRover(context: CanvasRenderingContext2D, { width, height, wheelCons
 	}
 }
 
-function drawLandmines(context: CanvasRenderingContext2D, {angle, position}: Rover, mines: Landmine[]) {
+function drawLandmines(context: CanvasRenderingContext2D, { angle, position }: Rover, mines: Landmine[]) {
 	const roverX = position[0];
 	const roverY = position[1];
 
@@ -56,7 +56,7 @@ function drawLandmines(context: CanvasRenderingContext2D, {angle, position}: Rov
 	context.rotate(-angle); // Back to world space
 	context.translate(roverX * SCALE, roverY * SCALE); // Translate to the center
 
-	for (let mine of mines) {
+	for (const mine of mines) {
 		context.save();
 
 		const { position } = mine;
@@ -91,7 +91,7 @@ function drawPath(context: CanvasRenderingContext2D, { position, angle }: Rover,
 	context.beginPath();
 	context.moveTo(0, 0);
 
-	for (let [x, y] of trace) {
+	for (const [x, y] of trace) {
 		context.lineTo(baseX - x, y - baseY);
 	}
 	context.stroke();
@@ -122,17 +122,17 @@ function drawMarkers(
 	context.textAlign = 'center';
 
 	let index = 0;
-	for (let marker of markers) {
+	for (const marker of markers) {
 		context.save();
 
-		let { position, label } = marker;
+		const { position, label } = marker;
 
 		const [markerX, markerY] = position;
 
 		const deltaX = markerX - roverX;
 		const deltaY = markerY - roverY;
 
-		let theta = Math.atan2(deltaY, deltaX); // degree from pos X axis
+		const theta = Math.atan2(deltaY, deltaX); // degree from pos X axis
 		const distance = Math.hypot(deltaX, deltaY) * SCALE;
 
 		const maxDistance = radius - 15;

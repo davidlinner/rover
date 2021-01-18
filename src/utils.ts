@@ -1,4 +1,4 @@
-export function randn_bm(min: number, max: number, skew: number = 1) {
+export function randn_bm(min: number, max: number, skew = 1) {
 	let u = 0,
 		v = 0;
 	while (u === 0) u = Math.random(); //Converting [0,1) to (0,1)
