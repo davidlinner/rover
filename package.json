@@ -15,9 +15,7 @@
 		"generate-doc": "typedoc",
 		"build": "tsc",
 		"dev": "tsc --watch",
-		"lint": "eslint src --fix",
-		"prepublishOnly": "pinst --disable",
-		"postpublish": "pinst --enable"
+		"lint": "eslint src --fix"
 	},
 	"jest": {
 		"transform": {
@@ -44,7 +42,6 @@
 		"eslint-config-prettier": "^7.1.0",
 		"eslint-plugin-prettier": "^3.3.1",
 		"jest": "^26.6.3",
-		"pinst": "^2.1.1",
 		"prettier": "^2.2.1",
 		"ts-jest": "^26.4.4",
 		"typedoc": "^0.20.13",
