@@ -1,5 +1,5 @@
 import { RenderingOptions } from './types';
-import { LANDMINE_RADIUS, MAX_PROXIMITY_DISTANCE } from './Simulation';
+import { TARGET_RADIUS, MAX_PROXIMITY_DISTANCE } from './Simulation';
 import { WheelConstraint } from 'p2';
 
 const SCALE = 15;
@@ -17,7 +17,7 @@ export interface Obstacle {
 	position: Point;
 }
 
-export interface Landmine {
+export interface Target {
 	position: Point;
 }
 
@@ -47,7 +47,7 @@ function drawRover(context: CanvasRenderingContext2D, { width, height, wheelCons
 	}
 }
 
-function drawLandmines(context: CanvasRenderingContext2D, { angle, position }: Rover, mines: Landmine[]) {
+function drawTargets(context: CanvasRenderingContext2D, { angle, position }: Rover, targets: Target[]) {
 	const roverX = position[0];
 	const roverY = position[1];
 
@@ -56,19 +56,19 @@ function drawLandmines(context: CanvasRenderingContext2D, { angle, position }: R
 	context.rotate(-angle); // Back to world space
 	context.translate(roverX * SCALE, roverY * SCALE); // Translate to the center
 
-	for (const mine of mines) {
+	for (const target of targets) {
 		context.save();
 
-		const { position } = mine;
-		const mineX = position[0] * SCALE;
-		const mineY = position[1] * -SCALE;
-		const mineSize = LANDMINE_RADIUS * SCALE;
+		const { position } = target;
+		const targetX = position[0] * SCALE;
+		const targetY = position[1] * -SCALE;
+		const targetSize = TARGET_RADIUS * SCALE;
 
-		context.translate(mineX, mineY);
+		context.translate(targetX, targetY);
 
 		context.fillStyle = 'red';
 		context.beginPath();
-		context.arc(0, 0, mineSize, 0, Math.PI * 2);
+		context.arc(0, 0, targetSize, 0, Math.PI * 2);
 		context.fill();
 
 		context.restore();
@@ -121,7 +121,6 @@ function drawMarkers(
 	context.fillStyle = color;
 	context.textAlign = 'center';
 
-	let index = 0;
 	for (const marker of markers) {
 		context.save();
 
@@ -162,7 +161,6 @@ function drawMarkers(
 		context.fill();
 		context.restore();
 
-		index++;
 		context.restore();
 	}
 
@@ -293,7 +291,7 @@ export default function render(
 	trace: Array<Point>,
 	markers: Array<Marker>,
 	obstacles: Array<Obstacle>,
-	landmines: Array<Landmine>,
+	targets: Array<Target>,
 	proximityValues: Array<number>,
 	options: RenderingOptions
 ) {
@@ -357,5 +355,5 @@ export default function render(
 	}
 
 	drawMarkers(context, rover, markers, radius, width, height, colorMarker);
-	drawLandmines(context, rover, landmines);
+	drawTargets(context, rover, targets);
 }

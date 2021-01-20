@@ -7,7 +7,7 @@ export interface SimulationOptions {
         longitude: number;
         radius: number;
     }>;
-    landmines?: Array<{
+    targets?: Array<{
         latitude: number;
         longitude: number;
     }>;
@@ -29,6 +29,7 @@ export interface SensorValues {
     location: Location;
     heading: number;
     proximity: Array<number>;
+    targetFinderSignal: number;
     clock: number;
 }
 export interface ActuatorValues {

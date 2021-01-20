@@ -1,5 +1,5 @@
-import { Location, SimulationOptions } from './types';
-export declare const LANDMINE_RADIUS = 0.15;
+import { SimulationOptions } from './types';
+export declare const TARGET_RADIUS = 0.15;
 export declare const MAX_PROXIMITY_DISTANCE = 8;
 declare class Simulation {
     readonly context: CanvasRenderingContext2D;
@@ -14,7 +14,7 @@ declare class Simulation {
     private markers;
     private obstacles;
     private proximityValues;
-    private landmines;
+    private targets;
     private readonly renderingOptions;
     private readonly physicalOptions;
     private lastRenderTime;
@@ -25,14 +25,17 @@ declare class Simulation {
     private static createCanvas;
     private static toRelativeOffset;
     private initMarkers;
-    private initLandmines;
+    private initTargets;
     private initObstacles;
     private updateProximityValues;
-    getRoverHeading(): number;
-    getRoverLocation(): Location;
+    private get targetFinderSignal();
+    private get roverHeading();
+    private positionToCoordinates;
+    private get roverLocation();
     start(): void;
     stop(): void;
     private trackPosition;
     private animate;
 }
-export { Simulation, SimulationOptions };
+export { Simulation };
+export type { SimulationOptions };

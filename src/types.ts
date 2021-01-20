@@ -24,9 +24,9 @@ export interface SimulationOptions {
 	obstacles?: Array<{ latitude: number; longitude: number; radius: number }>;
 
 	/**
-	 * Landmines that emit a trigger event when touched
+	 * Targets that can be found using the targetFinderSignal
 	 */
-	landmines?: Array<{ latitude: number; longitude: number }>;
+	targets?: Array<{ latitude: number; longitude: number }>;
 
 	/**
 	 * Additional options for the visualization.
@@ -91,6 +91,11 @@ export interface SensorValues {
 	 * 360° distance values to obstacles in clockwise order ...
 	 */
 	proximity: Array<number>;
+
+	/**
+	 * Summed values from 0 to 1 for each target in range ...
+	 */
+	targetFinderSignal: number;
 
 	/**
 	 * Time in milliseconds since the control loop with run the first time.

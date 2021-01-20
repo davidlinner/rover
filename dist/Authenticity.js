@@ -8,7 +8,7 @@ const latlon_spherical_js_1 = __importDefault(require("geodesy/latlon-spherical.
 const Simulation_1 = require("./Simulation");
 const utils_1 = require("./utils");
 function AUTHENTICITY_LEVEL0(vehicleOptions) {
-    const engineCount = (vehicleOptions === null || vehicleOptions === void 0 ? void 0 : vehicleOptions.engineCount) || 2;
+    const engineCount = vehicleOptions?.engineCount || 2;
     const errorHeading = (heading) => heading;
     const errorEngine = new Array(engineCount).map(() => (value) => value);
     const errorLocation = (location) => location;
@@ -27,7 +27,7 @@ function biasedRandom(bias, influence = 1, min = 0, max = 1) {
     return rnd * (1 - mix) + bias * mix;
 }
 function AUTHENTICITY_LEVEL1(vehicleOptions) {
-    const engineCount = (vehicleOptions === null || vehicleOptions === void 0 ? void 0 : vehicleOptions.engineCount) || 2;
+    const engineCount = vehicleOptions?.engineCount || 2;
     const maxHeadingError = 5;
     const maxEngineError = 0.01;
     const maxLocationError = 5;
@@ -64,7 +64,7 @@ function AUTHENTICITY_LEVEL1(vehicleOptions) {
 }
 exports.AUTHENTICITY_LEVEL1 = AUTHENTICITY_LEVEL1;
 function AUTHENTICITY_LEVEL2(vehicleOptions) {
-    const engineCount = (vehicleOptions === null || vehicleOptions === void 0 ? void 0 : vehicleOptions.engineCount) || 2;
+    const engineCount = vehicleOptions?.engineCount || 2;
     const maxHeadingError = 5;
     const maxEngineError = 0.01;
     const maxLocationError = 5;

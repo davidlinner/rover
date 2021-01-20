@@ -18,23 +18,23 @@ function drawRover(context, { width, height, wheelConstraints }, color) {
         context.restore();
     }
 }
-function drawLandmines(context, { angle, position }, mines) {
+function drawTargets(context, { angle, position }, targets) {
     const roverX = position[0];
     const roverY = position[1];
     context.save();
     context.translate(context.canvas.width / 2, context.canvas.height / 2);
     context.rotate(-angle);
     context.translate(roverX * SCALE, roverY * SCALE);
-    for (let mine of mines) {
+    for (const target of targets) {
         context.save();
-        const { position } = mine;
-        const mineX = position[0] * SCALE;
-        const mineY = position[1] * -SCALE;
-        const mineSize = Simulation_1.LANDMINE_RADIUS * SCALE;
-        context.translate(mineX, mineY);
+        const { position } = target;
+        const targetX = position[0] * SCALE;
+        const targetY = position[1] * -SCALE;
+        const targetSize = Simulation_1.TARGET_RADIUS * SCALE;
+        context.translate(targetX, targetY);
         context.fillStyle = 'red';
         context.beginPath();
-        context.arc(0, 0, mineSize, 0, Math.PI * 2);
+        context.arc(0, 0, targetSize, 0, Math.PI * 2);
         context.fill();
         context.restore();
     }
@@ -50,7 +50,7 @@ function drawPath(context, { position, angle }, trace, color) {
     context.rotate(angle);
     context.beginPath();
     context.moveTo(0, 0);
-    for (let [x, y] of trace) {
+    for (const [x, y] of trace) {
         context.lineTo(baseX - x, y - baseY);
     }
     context.stroke();
@@ -67,14 +67,13 @@ function drawMarkers(context, { position, angle }, markers, radius, width, heigh
     context.font = '21px monospace';
     context.fillStyle = color;
     context.textAlign = 'center';
-    let index = 0;
-    for (let marker of markers) {
+    for (const marker of markers) {
         context.save();
-        let { position, label } = marker;
+        const { position, label } = marker;
         const [markerX, markerY] = position;
         const deltaX = markerX - roverX;
         const deltaY = markerY - roverY;
-        let theta = Math.atan2(deltaY, deltaX);
+        const theta = Math.atan2(deltaY, deltaX);
         const distance = Math.hypot(deltaX, deltaY) * SCALE;
         const maxDistance = radius - 15;
         context.save();
@@ -94,7 +93,6 @@ function drawMarkers(context, { position, angle }, markers, radius, width, heigh
         context.arc(0, 0, 2.5, 0, Math.PI * 2);
         context.fill();
         context.restore();
-        index++;
         context.restore();
     }
     context.restore();
@@ -189,7 +187,7 @@ function drawGrid(context, { position, angle }, rasterSize, color) {
     context.stroke();
     context.restore();
 }
-function render(context, rover, trace, markers, obstacles, landmines, proximityValues, options) {
+function render(context, rover, trace, markers, obstacles, targets, proximityValues, options) {
     const { height = 500, width = 500, showGrid = true, showTrace = true, showCompass = true, colorTrace = 'blue', colorRover = 'red', colorMarker = 'CornflowerBlue', colorGrid = 'lightgreen', colorCompass = 'lime', } = options;
     context.fillStyle = 'black';
     context.fillRect(0, 0, width, height);
@@ -219,6 +217,6 @@ function render(context, rover, trace, markers, obstacles, landmines, proximityV
         drawCompass(context, rover, radius, colorCompass);
     }
     drawMarkers(context, rover, markers, radius, width, height, colorMarker);
-    drawLandmines(context, rover, landmines);
+    drawTargets(context, rover, targets);
 }
 exports.default = render;

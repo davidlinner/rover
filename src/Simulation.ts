@@ -1,7 +1,7 @@
 import p2 from 'p2';
 import LatLon from 'geodesy/latlon-spherical.js';
 
-import render, { Landmine, Marker, Obstacle, Point } from './render';
+import render, { Target, Marker, Obstacle, Point } from './render';
 import { distance } from './tools';
 import {
 	ActuatorValues,
@@ -18,7 +18,7 @@ const ROVER_WIDTH = 0.5;
 const ROVER_HEIGHT = 1.0;
 const ROVER_MASS = 10;
 
-export const LANDMINE_RADIUS = 0.15;
+export const TARGET_RADIUS = 0.15;
 
 const MIN_TRACKING_POINT_DISTANCE = 1;
 
@@ -99,7 +99,7 @@ class Simulation {
 	private markers: Array<Marker> = [];
 	private obstacles: Array<Obstacle> = [];
 	private proximityValues: Array<number> = [];
-	private landmines: Array<Landmine> = [];
+	private targets: Array<Target> = [];
 
 	private readonly renderingOptions: RenderingOptions;
 	private readonly physicalOptions: PhysicalOptions;
@@ -122,7 +122,7 @@ class Simulation {
 			physicalConstraints = AUTHENTICITY_LEVEL0,
 			locationsOfInterest = [],
 			obstacles = [],
-			landmines = [],
+			targets = [],
 			origin,
 		} = simulationOptions;
 
@@ -174,7 +174,7 @@ class Simulation {
 		this.offset = new LatLon(origin.latitude, origin.longitude);
 
 		this.initObstacles(origin, obstacles);
-		this.initLandmines(origin, landmines);
+		this.initTargets(origin, targets);
 		this.updateProximityValues();
 	}
 
@@ -213,13 +213,13 @@ class Simulation {
 		}
 	}
 
-	private initLandmines(origin: Location, landmines: Array<{ latitude: number; longitude: number }>) {
+	private initTargets(origin: Location, targets: Array<{ latitude: number; longitude: number }>) {
 		if (origin) {
-			this.landmines = landmines.map((mine) => {
-				const [x, y] = Simulation.toRelativeOffset(origin, mine);
+			this.targets = targets.map((target) => {
+				const [x, y] = Simulation.toRelativeOffset(origin, target);
 
-				const mineShape = new p2.Circle({ radius: LANDMINE_RADIUS, sensor: true, collisionResponse: false });
-				const mineBody = new p2.Body({
+				const targetShape = new p2.Circle({ radius: TARGET_RADIUS, sensor: true, collisionResponse: false });
+				const targetBody = new p2.Body({
 					mass: 0,
 					position: [-x, y],
 					fixedX: true,
@@ -228,10 +228,10 @@ class Simulation {
 					collisionResponse: false,
 				});
 
-				mineBody.addShape(mineShape);
-				this.world.addBody(mineBody);
+				targetBody.addShape(targetShape);
+				this.world.addBody(targetBody);
 
-				return { position: [x, y] };
+				return { position: [x, y], latitude: target.latitude, longitude: target.longitude };
 			});
 		}
 	}
@@ -292,10 +292,32 @@ class Simulation {
 		}
 	}
 
+	private get targetFinderSignal() {
+		// eslint-disable-next-line prettier/prettier
+		const roverPos = [
+			this.rover.interpolatedPosition[0] * -1, // Flip x axis back
+			this.rover.interpolatedPosition[1],
+		] as [number, number];
+		const roverCords = this.positionToCoordinates(roverPos);
+		const roverLoc = new LatLon(roverCords.latitude, roverCords.longitude);
+
+		let signalStrength = 0;
+
+		for (const target of this.targets) {
+			const targetCords = this.positionToCoordinates(target.position);
+			const targetLoc = new LatLon(targetCords.latitude, targetCords.longitude);
+			const distance = roverLoc.distanceTo(targetLoc);
+
+			signalStrength += (1 / distance) * 0.02;
+		}
+
+		return Math.min(signalStrength, 1);
+	}
+
 	/**
 	 * Returns current rover heading.
 	 */
-	getRoverHeading() {
+	private get roverHeading() {
 		let heading = this.rover.angle % (2 * Math.PI);
 		if (heading < 0) {
 			heading += 2 * Math.PI;
@@ -307,16 +329,27 @@ class Simulation {
 		return errorHeading(trueHeading);
 	}
 
+	private positionToCoordinates(position: [x: number, y: number]) {
+		const [x, y] = position;
+
+		const coordinates = {
+			longitude: this.offset.destinationPoint(Math.abs(x), x <= 0 ? 270 : 90).longitude,
+			latitude: this.offset.destinationPoint(Math.abs(y), y <= 0 ? 180 : 0).latitude,
+		};
+
+		return coordinates;
+	}
+
 	/**
 	 * Returns current rover location.
 	 */
-	getRoverLocation(): Location {
-		const [x, y] = this.rover.interpolatedPosition;
-
-		const trueLocation = {
-			longitude: this.offset.destinationPoint(Math.abs(x), x <= 0 ? 90 : 270).longitude,
-			latitude: this.offset.destinationPoint(Math.abs(y), y <= 0 ? 180 : 0).latitude,
-		};
+	private get roverLocation(): Location {
+		// eslint-disable-next-line prettier/prettier
+		const roverPos = [
+			this.rover.interpolatedPosition[0] * -1, // Flip x axis back
+			this.rover.interpolatedPosition[1],
+		] as [number, number];
+		const trueLocation = this.positionToCoordinates(roverPos);
 
 		const { errorLocation = (location) => location } = this.physicalOptions;
 
@@ -339,9 +372,10 @@ class Simulation {
 			this.updateProximityValues();
 			const actuatorValues = this.loop(
 				{
-					heading: this.getRoverHeading(),
-					location: this.getRoverLocation(),
+					heading: this.roverHeading,
+					location: this.roverLocation,
 					proximity: this.proximityValues,
+					targetFinderSignal: this.targetFinderSignal,
 					clock,
 				},
 				{
@@ -385,7 +419,7 @@ class Simulation {
 	/**
 	 * Stops the simulation control loop.
 	 */
-	stop() {
+	public stop() {
 		if (this.interval != null) {
 			clearInterval(this.interval);
 			this.interval = null;
@@ -434,7 +468,7 @@ class Simulation {
 			this.trace,
 			this.markers,
 			this.obstacles,
-			this.landmines,
+			this.targets,
 			this.proximityValues,
 			this.renderingOptions
 		);
