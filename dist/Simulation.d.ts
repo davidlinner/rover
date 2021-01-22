@@ -5,6 +5,7 @@ declare class Simulation {
     readonly context: CanvasRenderingContext2D;
     private world;
     private rover;
+    private roverType;
     private wheelConstraints;
     private engines;
     private steering;

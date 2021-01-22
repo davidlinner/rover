@@ -1,5 +1,6 @@
 export interface SimulationOptions {
     loop: ControlLoop;
+    roverType: RoverType;
     origin: Location;
     locationsOfInterest: Array<LocationOfInterest>;
     obstacles?: Array<{
@@ -33,8 +34,14 @@ export interface SensorValues {
     clock: number;
 }
 export interface ActuatorValues {
-    engines: [number, number];
-    steering: [number, number];
+    engines: Engines;
+    steering: Steering;
+}
+export declare type Engines = [number, number, number, number, number, number];
+export declare type Steering = [number, number, number, number];
+export declare enum RoverType {
+    tank = "tank",
+    rover = "rover"
 }
 declare type EngineError = (value: number) => number;
 declare type LocationError = (location: Location) => Location;
