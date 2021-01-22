@@ -1,7 +1,7 @@
 import p2 from 'p2';
 import LatLon from 'geodesy/latlon-spherical.js';
 
-import render, { Target, Marker, Obstacle, Point } from './render';
+import render, { Marker, Obstacle, Point, Target } from './render';
 import { distance } from './tools';
 import {
 	ActuatorValues,
@@ -10,13 +10,15 @@ import {
 	LocationOfInterest,
 	PhysicalOptions,
 	RenderingOptions,
+	RoverType,
 	SimulationOptions,
 } from './types';
 import { AUTHENTICITY_LEVEL0 } from './Authenticity';
 
 const ROVER_WIDTH = 0.5;
 const ROVER_HEIGHT = 1.0;
-const ROVER_MASS = 10;
+const ROVER_MASS_TYPE_ROVER = 10;
+const ROVER_MASS_TYPE_TANK = 10;
 
 export const TARGET_RADIUS = 0.15;
 
@@ -29,25 +31,86 @@ const FIXED_DELTA_TIME = 1 / 60; // Physics "tick" delta time
 
 const CONTROL_INTERVAL = 20; //ms
 
-const BASE_ENGINE_FORCE = 7.0;
+const BASE_ENGINE_FORCE_TYPE_ROVER = 2.3;
+const BASE_ENGINE_FORCE_TYPE_TANK = 2.3;
 
-const WHEEL_BREAK_FORCE = BASE_ENGINE_FORCE * 0.5;
-const WHEEL_SIDE_FRICTION = BASE_ENGINE_FORCE * 2;
+const WHEEL_BREAK_FORCE_TYPE_ROVER = BASE_ENGINE_FORCE_TYPE_ROVER * 0.5;
+const WHEEL_SIDE_FRICTION_TYPE_ROVER = BASE_ENGINE_FORCE_TYPE_ROVER * 2;
 
-const INITIAL_WHEEL_CONSTRAINTS: Array<{
+const WHEEL_BREAK_FORCE_TYPE_TANK = BASE_ENGINE_FORCE_TYPE_TANK * 0.5;
+const WHEEL_SIDE_FRICTION_TYPE_TANK = BASE_ENGINE_FORCE_TYPE_TANK * 0.5;
+
+const INITIAL_WHEEL_CONSTRAINTS_TYPE_ROVER: Array<{
 	localPosition: [number, number];
 	brakeForce: number;
 	sideFriction: number;
 }> = [
 	{
-		localPosition: [0, 0.5],
-		brakeForce: WHEEL_BREAK_FORCE,
-		sideFriction: WHEEL_SIDE_FRICTION,
+		localPosition: [-0.25, 0.5],
+		brakeForce: WHEEL_BREAK_FORCE_TYPE_ROVER,
+		sideFriction: WHEEL_SIDE_FRICTION_TYPE_ROVER,
 	},
 	{
-		localPosition: [0, -0.5],
-		brakeForce: WHEEL_BREAK_FORCE,
-		sideFriction: WHEEL_SIDE_FRICTION,
+		localPosition: [0.25, 0.5],
+		brakeForce: WHEEL_BREAK_FORCE_TYPE_ROVER,
+		sideFriction: WHEEL_SIDE_FRICTION_TYPE_ROVER,
+	},
+	{
+		localPosition: [-0.25, 0],
+		brakeForce: WHEEL_BREAK_FORCE_TYPE_ROVER,
+		sideFriction: 0,
+	},
+	{
+		localPosition: [0.25, 0],
+		brakeForce: WHEEL_BREAK_FORCE_TYPE_ROVER,
+		sideFriction: 0,
+	},
+	{
+		localPosition: [-0.25, -0.5],
+		brakeForce: WHEEL_BREAK_FORCE_TYPE_ROVER,
+		sideFriction: WHEEL_SIDE_FRICTION_TYPE_ROVER,
+	},
+	{
+		localPosition: [0.25, -0.5],
+		brakeForce: WHEEL_BREAK_FORCE_TYPE_ROVER,
+		sideFriction: WHEEL_SIDE_FRICTION_TYPE_ROVER,
+	},
+];
+
+const INITIAL_WHEEL_CONSTRAINTS_TYPE_TANK: Array<{
+	localPosition: [number, number];
+	brakeForce: number;
+	sideFriction: number;
+}> = [
+	{
+		localPosition: [-0.25, 0.25],
+		brakeForce: WHEEL_BREAK_FORCE_TYPE_TANK,
+		sideFriction: WHEEL_SIDE_FRICTION_TYPE_TANK,
+	},
+	{
+		localPosition: [0.25, 0.25],
+		brakeForce: WHEEL_BREAK_FORCE_TYPE_TANK,
+		sideFriction: WHEEL_SIDE_FRICTION_TYPE_TANK,
+	},
+	{
+		localPosition: [-0.25, 0],
+		brakeForce: WHEEL_BREAK_FORCE_TYPE_TANK,
+		sideFriction: WHEEL_SIDE_FRICTION_TYPE_TANK,
+	},
+	{
+		localPosition: [0.25, 0],
+		brakeForce: WHEEL_BREAK_FORCE_TYPE_TANK,
+		sideFriction: WHEEL_SIDE_FRICTION_TYPE_TANK,
+	},
+	{
+		localPosition: [-0.25, -0.25],
+		brakeForce: WHEEL_BREAK_FORCE_TYPE_TANK,
+		sideFriction: WHEEL_SIDE_FRICTION_TYPE_TANK,
+	},
+	{
+		localPosition: [0.25, -0.25],
+		brakeForce: WHEEL_BREAK_FORCE_TYPE_TANK,
+		sideFriction: WHEEL_SIDE_FRICTION_TYPE_TANK,
 	},
 ];
 
@@ -86,10 +149,12 @@ class Simulation {
 	private world: p2.World;
 	private rover: p2.Body;
 
-	private wheelConstraints: Array<p2.WheelConstraint>;
-	private engines: ActuatorValues['engines'] = [0, 0];
+	private roverType: RoverType;
 
-	private steering: ActuatorValues['steering'] = [180, 180];
+	private wheelConstraints: Array<p2.WheelConstraint>;
+	private engines: ActuatorValues['engines'] = [0, 0, 0, 0, 0, 0];
+
+	private steering: ActuatorValues['steering'] = [180, 180, 180, 180];
 
 	private readonly loop: ControlLoop;
 
@@ -124,11 +189,13 @@ class Simulation {
 			obstacles = [],
 			targets = [],
 			origin,
+			roverType,
 		} = simulationOptions;
 
 		const { height = 500, width = 500 } = renderingOptions;
 
 		this.loop = loop;
+		this.roverType = roverType;
 
 		// Init canvas
 		const canvas = Simulation.createCanvas(element, width, height);
@@ -143,13 +210,17 @@ class Simulation {
 			gravity: [0, 0],
 		});
 
-		const rover = new p2.Body({ mass: ROVER_MASS });
+		const rover = new p2.Body({
+			mass: this.roverType === RoverType.rover ? ROVER_MASS_TYPE_ROVER : ROVER_MASS_TYPE_TANK,
+		});
 		rover.addShape(new p2.Box({ width: ROVER_WIDTH, height: ROVER_HEIGHT }));
 		world.addBody(rover);
 
 		const vehicle = new p2.TopDownVehicle(rover);
-		const wheelConstraints = INITIAL_WHEEL_CONSTRAINTS.map(({ sideFriction, brakeForce, localPosition }) => {
-			// Add one front wheel and one back wheel - we don't actually need four :)
+		const wheelConstraints = (this.roverType === RoverType.rover
+			? INITIAL_WHEEL_CONSTRAINTS_TYPE_ROVER
+			: INITIAL_WHEEL_CONSTRAINTS_TYPE_TANK
+		).map(({ sideFriction, brakeForce, localPosition }) => {
 			const wheelConstraint = vehicle.addWheel({ localPosition });
 			wheelConstraint.setSideFriction(sideFriction);
 			wheelConstraint.setBrakeForce(brakeForce);
@@ -169,7 +240,7 @@ class Simulation {
 			height,
 		};
 
-		this.physicalOptions = physicalConstraints({ engineCount: 2 }); // constant for the moment
+		this.physicalOptions = physicalConstraints({ engineCount: 6 }); // constant for the moment
 
 		this.offset = new LatLon(origin.latitude, origin.longitude);
 
@@ -388,28 +459,42 @@ class Simulation {
 
 			const { errorEngine = [] } = this.physicalOptions;
 
-			if (engines.length === 2) {
+			if (engines.length === 6) {
 				for (let i = 0; i < engines.length; i++) {
 					if (engines[i] <= 1.0 && engines[i] >= -1.0) {
 						this.engines[i] = engines[i];
 						const errorFunction = errorEngine[i] || ((v) => v);
-						this.wheelConstraints[i].engineForce = BASE_ENGINE_FORCE * errorFunction(engines[i]);
+						this.wheelConstraints[i].engineForce =
+							(this.roverType === RoverType.rover
+								? BASE_ENGINE_FORCE_TYPE_ROVER
+								: BASE_ENGINE_FORCE_TYPE_TANK) * errorFunction(engines[i]);
 					} else {
 						console.error('Wheel power out of range [-1.0 : 1.0]');
 					}
 				}
+			} else {
+				console.error('The engines actuator array must have a length of 6 => [number x6]');
 			}
 
-			if (steering.length === 2) {
-				steering.forEach((steeringValue, index) => {
-					if (steeringValue >= 0 || steeringValue <= 360) {
-						const mappedSteeringValue = ((steeringValue - 180) * Math.PI) / 180; // p2 needs rad
-						this.steering[index] = steeringValue;
-						this.wheelConstraints[index].steerValue = mappedSteeringValue;
-					} else {
-						console.error('Steering value out of range [0 : 360]');
-					}
-				});
+			if (this.roverType === RoverType.rover) {
+				if (steering.length === 4) {
+					steering.forEach((steeringValue, index) => {
+						if (steeringValue >= 0 || steeringValue <= 360) {
+							const mappedSteeringValue = ((steeringValue - 180) * Math.PI) / 180; // p2 needs rad
+							if (index <= 2) {
+								this.steering[index] = steeringValue;
+								this.wheelConstraints[index].steerValue = mappedSteeringValue;
+							} else {
+								this.steering[index + 2] = steeringValue;
+								this.wheelConstraints[index + 2].steerValue = mappedSteeringValue;
+							}
+						} else {
+							console.error('Steering value out of range [0 : 360]');
+						}
+					});
+				} else {
+					console.error('The engines actuator array must have a length of 4 => [number x4]');
+				}
 			}
 		}, CONTROL_INTERVAL);
 
