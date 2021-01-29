@@ -238,7 +238,7 @@ function drawCompass(context: CanvasRenderingContext2D, { angle }: Rover, radius
 
 	const directions: Array<{ label: string; offset: [x: number, y: number] }> = [
 		{ label: 'N', offset: [0, -radius + fontSize] },
-		{ label: 'O', offset: [radius - fontSize, 0] },
+		{ label: 'E', offset: [radius - fontSize, 0] },
 		{ label: 'S', offset: [0, radius - fontSize] },
 		{ label: 'W', offset: [-radius + fontSize, 0] },
 	];
