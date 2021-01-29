@@ -161,4 +161,4 @@ Please consult the API Docs for more details.
 
 Distributed under the MIT License.
 
-[product-screenshot]: images/screenshot.jpg
+[product-screenshot]: images/rover.gif

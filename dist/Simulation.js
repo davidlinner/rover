@@ -315,7 +315,7 @@ class Simulation {
             if (engines.length !== this.engines.length) {
                 console.error(`Invalid number of engine power arguments, expected ${this.engines.length}, found ${engines.length}`);
             }
-            if (engines.find(value => value < -1.0 || value > 1.0)) {
+            if (engines.find((value) => value < -1.0 || value > 1.0)) {
                 console.error('One or more engine power values incorrect, must be in of range [-1.0 : 1.0]');
             }
             else {
