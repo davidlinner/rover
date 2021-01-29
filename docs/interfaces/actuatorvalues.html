@@ -88,6 +88,7 @@
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="actuatorvalues.html#engines" class="tsd-kind-icon">engines</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="actuatorvalues.html#steering" class="tsd-kind-icon">steering</a></li>
 							</ul>
 						</section>
 					</div>
@@ -98,18 +99,22 @@
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
 					<a name="engines" class="tsd-anchor"></a>
 					<h3>engines</h3>
-					<div class="tsd-signature tsd-kind-icon">engines<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">[]</span></div>
+					<div class="tsd-signature tsd-kind-icon">engines<span class="tsd-signature-symbol">:</span> <a href="../index.html#engines" class="tsd-signature-type" data-tsd-kind="Type alias">Engines</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/davidlinner/rover/blob/3247c30/src/types.ts#L112">types.ts:112</a></li>
+							<li>Defined in <a href="https://github.com/davidlinner/rover/blob/edc70c1/src/types.ts#L115">types.ts:115</a></li>
 						</ul>
 					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p>Power values of all engines, left to right, top to bottom. Values have to
-							be in the range [-1.0 : 1.0], where 0 means the vehicle is at rest.</p>
-						</div>
-					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="steering" class="tsd-anchor"></a>
+					<h3>steering</h3>
+					<div class="tsd-signature tsd-kind-icon">steering<span class="tsd-signature-symbol">:</span> <a href="../index.html#steering" class="tsd-signature-type" data-tsd-kind="Type alias">Steering</a></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/davidlinner/rover/blob/edc70c1/src/types.ts#L116">types.ts:116</a></li>
+						</ul>
+					</aside>
 				</section>
 			</section>
 		</div>
@@ -123,6 +128,9 @@
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
+					<li class=" tsd-kind-enum">
+						<a href="../enums/vehicletype.html" class="tsd-kind-icon">Vehicle<wbr>Type</a>
+					</li>
 					<li class=" tsd-kind-class">
 						<a href="../classes/simulation.html" class="tsd-kind-icon">Simulation</a>
 					</li>
@@ -133,6 +141,9 @@
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
 								<a href="actuatorvalues.html#engines" class="tsd-kind-icon">engines</a>
+							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="actuatorvalues.html#steering" class="tsd-kind-icon">steering</a>
 							</li>
 						</ul>
 					</li>
@@ -163,16 +174,28 @@
 						<a href="../index.html#controlloop" class="tsd-kind-icon">Control<wbr>Loop</a>
 					</li>
 					<li class=" tsd-kind-type-alias">
+						<a href="../index.html#engines" class="tsd-kind-icon">Engines</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
 						<a href="../index.html#physicalconstraints" class="tsd-kind-icon">Physical<wbr>Constraints</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="../index.html#steering" class="tsd-kind-icon">Steering</a>
 					</li>
 					<li class=" tsd-kind-variable">
 						<a href="../index.html#max_proximity_distance" class="tsd-kind-icon">MAX_<wbr>PROXIMITY_<wbr>DISTANCE</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="../index.html#target_radius" class="tsd-kind-icon">TARGET_<wbr>RADIUS</a>
 					</li>
 					<li class=" tsd-kind-function">
 						<a href="../index.html#authenticity_level0" class="tsd-kind-icon">AUTHENTICITY_<wbr>LEVEL0</a>
 					</li>
 					<li class=" tsd-kind-function">
 						<a href="../index.html#authenticity_level1" class="tsd-kind-icon">AUTHENTICITY_<wbr>LEVEL1</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="../index.html#authenticity_level2" class="tsd-kind-icon">AUTHENTICITY_<wbr>LEVEL2</a>
 					</li>
 				</ul>
 			</nav>
@@ -185,6 +208,7 @@
 		<div class="tsd-legend-group">
 			<ul class="tsd-legend">
 				<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li>
 				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
 			</ul>
 			<ul class="tsd-legend">

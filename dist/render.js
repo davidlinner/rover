@@ -18,6 +18,28 @@ function drawRover(context, { width, height, wheelConstraints }, color) {
         context.restore();
     }
 }
+function drawTargets(context, { angle, position }, targets) {
+    const roverX = position[0];
+    const roverY = position[1];
+    context.save();
+    context.translate(context.canvas.width / 2, context.canvas.height / 2);
+    context.rotate(-angle);
+    context.translate(roverX * SCALE, roverY * SCALE);
+    for (const target of targets) {
+        context.save();
+        const { position } = target;
+        const targetX = position[0] * SCALE;
+        const targetY = position[1] * -SCALE;
+        const targetSize = Simulation_1.TARGET_RADIUS * SCALE;
+        context.translate(targetX, targetY);
+        context.fillStyle = 'red';
+        context.beginPath();
+        context.arc(0, 0, targetSize, 0, Math.PI * 2);
+        context.fill();
+        context.restore();
+    }
+    context.restore();
+}
 function drawPath(context, { position, angle }, trace, color) {
     if (trace.length < 1)
         return;
@@ -28,7 +50,7 @@ function drawPath(context, { position, angle }, trace, color) {
     context.rotate(angle);
     context.beginPath();
     context.moveTo(0, 0);
-    for (let [x, y] of trace) {
+    for (const [x, y] of trace) {
         context.lineTo(baseX - x, y - baseY);
     }
     context.stroke();
@@ -37,36 +59,40 @@ function drawPath(context, { position, angle }, trace, color) {
 function drawMarkers(context, { position, angle }, markers, radius, width, height, color) {
     if (markers.length < 1)
         return;
-    const [baseX, baseY] = position;
+    const roverX = position[0] * -1;
+    const roverY = position[1];
     context.save();
     context.translate(width / 2, height / 2);
-    context.scale(SCALE, SCALE);
     context.rotate(-angle);
-    context.font = "2px sans-serif";
+    context.font = '21px monospace';
     context.fillStyle = color;
-    context.textAlign = "center";
-    for (let marker of markers) {
-        const { position = [0, 0], label = 'X' } = marker;
-        const [x, y] = position;
-        const deltaX = baseX - x;
-        const deltaY = baseY - y;
-        const theta = Math.atan2(deltaX, deltaY);
-        const distance = Math.hypot(deltaX, deltaY);
-        const maxDistance = (radius - 15) / SCALE;
+    context.textAlign = 'center';
+    for (const marker of markers) {
         context.save();
+        const { position, label } = marker;
+        const [markerX, markerY] = position;
+        const deltaX = markerX - roverX;
+        const deltaY = markerY - roverY;
+        const theta = Math.atan2(deltaY, deltaX);
+        const distance = Math.hypot(deltaX, deltaY) * SCALE;
+        const maxDistance = radius - 15;
+        context.save();
+        context.rotate((Math.PI / 2) * -1);
         context.rotate(-theta);
         context.translate(0, Math.min(distance, maxDistance));
+        context.rotate(Math.PI / 2);
         context.rotate(theta);
         context.rotate(angle);
         if (distance < maxDistance) {
             const linearAlpha = Math.max(0, maxDistance - distance) / maxDistance;
             context.globalAlpha = Math.min(linearAlpha * 8, 1);
-            context.fillText(label, 0, -1);
+            context.fillText(label, 0, -10);
             context.globalAlpha = 1;
         }
         context.beginPath();
-        context.arc(0, 0, .25, 0, Math.PI * 2);
+        context.arc(0, 0, 2.5, 0, Math.PI * 2);
         context.fill();
+        context.restore();
         context.restore();
     }
     context.restore();
@@ -77,12 +103,13 @@ function drawObstacles(context, { position, angle }, obstacles) {
     context.translate(context.canvas.width / 2, context.canvas.height / 2);
     context.scale(SCALE, SCALE);
     context.rotate(-angle);
-    context.fillStyle = 'rgba(255, 0, 0, 0.2)';
-    context.strokeStyle = 'rgba(255, 0, 0, 1)';
+    context.fillStyle = 'rgba(255, 255, 255, 0.15)';
+    context.strokeStyle = 'rgba(255, 255, 255, 0.3)';
     context.lineWidth = 0.1;
     for (const obstacle of obstacles) {
         const { position, radius } = obstacle;
-        const [x, y] = position;
+        const x = position[0] * -1;
+        const y = position[1];
         context.save();
         context.translate(baseX - x, baseY - y);
         context.beginPath();
@@ -160,9 +187,9 @@ function drawGrid(context, { position, angle }, rasterSize, color) {
     context.stroke();
     context.restore();
 }
-function render(context, rover, trace, markers, obstacles, proximityValues, options) {
-    const { height = 500, width = 500, showGrid = true, showTrace = true, showCompass = true, colorTrace = 'blue', colorRover = 'red', colorMarker = 'goldenrod', colorGrid = 'lightgreen', colorCompass = 'lime', } = options;
-    context.fillStyle = "black";
+function render(context, rover, trace, markers, obstacles, targets, proximityValues, options) {
+    const { height = 500, width = 500, showGrid = true, showTrace = true, showCompass = true, colorTrace = 'blue', colorRover = 'red', colorMarker = 'CornflowerBlue', colorGrid = 'lightgreen', colorCompass = 'lime', } = options;
+    context.fillStyle = 'black';
     context.fillRect(0, 0, width, height);
     context.save();
     context.translate(width / 2, height / 2);
@@ -177,7 +204,7 @@ function render(context, rover, trace, markers, obstacles, proximityValues, opti
     context.clip();
     context.scale(SCALE, -SCALE);
     if (showGrid) {
-        drawGrid(context, rover, Math.ceil(width / SCALE / GRID_GUTTER * 1.2), colorGrid);
+        drawGrid(context, rover, Math.ceil((width / SCALE / GRID_GUTTER) * 1.2), colorGrid);
     }
     if (showTrace) {
         drawPath(context, rover, trace, colorTrace);
@@ -190,5 +217,6 @@ function render(context, rover, trace, markers, obstacles, proximityValues, opti
         drawCompass(context, rover, radius, colorCompass);
     }
     drawMarkers(context, rover, markers, radius, width, height, colorMarker);
+    drawTargets(context, rover, targets);
 }
 exports.default = render;

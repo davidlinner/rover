@@ -1,5 +1,6 @@
 export interface SimulationOptions {
     loop: ControlLoop;
+    vehicleType: VehicleType;
     origin: Location;
     locationsOfInterest: Array<LocationOfInterest>;
     obstacles?: Array<{
@@ -7,13 +8,16 @@ export interface SimulationOptions {
         longitude: number;
         radius: number;
     }>;
+    targets?: Array<{
+        latitude: number;
+        longitude: number;
+    }>;
     renderingOptions: RenderingOptions;
     physicalConstraints?: PhysicalConstraints;
-    vehicleOptions?: VehicleOptions;
     element: HTMLElement;
 }
 export interface VehicleOptions {
-    readonly engineCount: 2 | 6;
+    readonly engineCount: number;
 }
 export interface Location {
     latitude: number;
@@ -26,10 +30,18 @@ export interface SensorValues {
     location: Location;
     heading: number;
     proximity: Array<number>;
+    targetFinderSignal: number;
     clock: number;
 }
 export interface ActuatorValues {
-    engines: Array<number>;
+    engines: Engines;
+    steering: Steering;
+}
+export declare type Engines = [number, number, number, number, number, number] | [number, number];
+export declare type Steering = [number, number, number, number];
+export declare enum VehicleType {
+    Tank = "tank",
+    Rover = "rover"
 }
 declare type EngineError = (value: number) => number;
 declare type LocationError = (location: Location) => Location;

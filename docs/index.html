@@ -62,6 +62,12 @@
 				<section class="tsd-panel tsd-index-panel">
 					<div class="tsd-index-content">
 						<section class="tsd-index-section ">
+							<h3>Enumerations</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-enum"><a href="enums/vehicletype.html" class="tsd-kind-icon">Vehicle<wbr>Type</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
 							<h3>Classes</h3>
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-class"><a href="classes/simulation.html" class="tsd-kind-icon">Simulation</a></li>
@@ -84,13 +90,16 @@
 							<h3>Type aliases</h3>
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-type-alias"><a href="index.html#controlloop" class="tsd-kind-icon">Control<wbr>Loop</a></li>
+								<li class="tsd-kind-type-alias"><a href="index.html#engines" class="tsd-kind-icon">Engines</a></li>
 								<li class="tsd-kind-type-alias"><a href="index.html#physicalconstraints" class="tsd-kind-icon">Physical<wbr>Constraints</a></li>
+								<li class="tsd-kind-type-alias"><a href="index.html#steering" class="tsd-kind-icon">Steering</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
 							<h3>Variables</h3>
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-variable"><a href="index.html#max_proximity_distance" class="tsd-kind-icon">MAX_<wbr>PROXIMITY_<wbr>DISTANCE</a></li>
+								<li class="tsd-kind-variable"><a href="index.html#target_radius" class="tsd-kind-icon">TARGET_<wbr>RADIUS</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
@@ -98,6 +107,7 @@
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-function"><a href="index.html#authenticity_level0" class="tsd-kind-icon">AUTHENTICITY_<wbr>LEVEL0</a></li>
 								<li class="tsd-kind-function"><a href="index.html#authenticity_level1" class="tsd-kind-icon">AUTHENTICITY_<wbr>LEVEL1</a></li>
+								<li class="tsd-kind-function"><a href="index.html#authenticity_level2" class="tsd-kind-icon">AUTHENTICITY_<wbr>LEVEL2</a></li>
 							</ul>
 						</section>
 					</div>
@@ -111,7 +121,7 @@
 					<div class="tsd-signature tsd-kind-icon">Control<wbr>Loop<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>sensors<span class="tsd-signature-symbol">: </span><a href="interfaces/sensorvalues.html" class="tsd-signature-type" data-tsd-kind="Interface">SensorValues</a>, actuators<span class="tsd-signature-symbol">: </span><a href="interfaces/actuatorvalues.html" class="tsd-signature-type" data-tsd-kind="Interface">ActuatorValues</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><a href="interfaces/actuatorvalues.html" class="tsd-signature-type" data-tsd-kind="Interface">ActuatorValues</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/davidlinner/rover/blob/3247c30/src/types.ts#L172">types.ts:172</a></li>
+							<li>Defined in <a href="https://github.com/davidlinner/rover/blob/edc70c1/src/types.ts#L193">types.ts:193</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -145,12 +155,28 @@
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-type-alias">
+					<a name="engines" class="tsd-anchor"></a>
+					<h3>Engines</h3>
+					<div class="tsd-signature tsd-kind-icon">Engines<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">]</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">]</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/davidlinner/rover/blob/edc70c1/src/types.ts#L123">types.ts:123</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Power values of all engines, left to right, top to bottom. Values have to
+							be in the range [-1.0 : 1.0], where 0 means the vehicle is at rest.</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-type-alias">
 					<a name="physicalconstraints" class="tsd-anchor"></a>
 					<h3>Physical<wbr>Constraints</h3>
 					<div class="tsd-signature tsd-kind-icon">Physical<wbr>Constraints<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">(</span>vehicle<span class="tsd-signature-symbol">: </span><a href="interfaces/vehicleoptions.html" class="tsd-signature-type" data-tsd-kind="Interface">VehicleOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol"> =&gt; </span><a href="interfaces/physicaloptions.html" class="tsd-signature-type" data-tsd-kind="Interface">PhysicalOptions</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/davidlinner/rover/blob/3247c30/src/types.ts#L167">types.ts:167</a></li>
+							<li>Defined in <a href="https://github.com/davidlinner/rover/blob/edc70c1/src/types.ts#L188">types.ts:188</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -180,6 +206,23 @@
 						</ul>
 					</div>
 				</section>
+				<section class="tsd-panel tsd-member tsd-kind-type-alias">
+					<a name="steering" class="tsd-anchor"></a>
+					<h3>Steering</h3>
+					<div class="tsd-signature tsd-kind-icon">Steering<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">[</span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">]</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/davidlinner/rover/blob/edc70c1/src/types.ts#L130">types.ts:130</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>Degree values of all steerable wheels, left to right, top to bottom. Values have to
+								be in the range [0 : 360], where 180 means the wheels are aligned forward. Will be ignored when
+							roverType is &#39;tank&#39;</p>
+						</div>
+					</div>
+				</section>
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Variables</h2>
@@ -189,7 +232,17 @@
 					<div class="tsd-signature tsd-kind-icon">MAX_<wbr>PROXIMITY_<wbr>DISTANCE<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">8</span><span class="tsd-signature-symbol"> = 8</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/davidlinner/rover/blob/3247c30/src/Simulation.ts#L21">Simulation.ts:21</a></li>
+							<li>Defined in <a href="https://github.com/davidlinner/rover/blob/edc70c1/src/Simulation.ts#L27">Simulation.ts:27</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-variable">
+					<a name="target_radius" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagConst">Const</span> TARGET_<wbr>RADIUS</h3>
+					<div class="tsd-signature tsd-kind-icon">TARGET_<wbr>RADIUS<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">0.15</span><span class="tsd-signature-symbol"> = 0.15</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/davidlinner/rover/blob/edc70c1/src/Simulation.ts#L23">Simulation.ts:23</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -206,7 +259,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/davidlinner/rover/blob/3247c30/src/Authenticity.ts#L10">Authenticity.ts:10</a></li>
+									<li>Defined in <a href="https://github.com/davidlinner/rover/blob/edc70c1/src/Authenticity.ts#L10">Authenticity.ts:10</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -237,7 +290,43 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/davidlinner/rover/blob/3247c30/src/Authenticity.ts#L39">Authenticity.ts:39</a></li>
+									<li>Defined in <a href="https://github.com/davidlinner/rover/blob/edc70c1/src/Authenticity.ts#L39">Authenticity.ts:39</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Creates physical options with the following properties:</p>
+									<ul>
+										<li>heading has a dynamic, random error of -3° &lt;= x &lt;= 3°</li>
+										<li>engines have a random static error of -0.05 &lt;= v &lt;= 0.05</li>
+										<li>location is a random error of max. 1.5m in random direction</li>
+									</ul>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> vehicleOptions: <a href="interfaces/vehicleoptions.html" class="tsd-signature-type" data-tsd-kind="Interface">VehicleOptions</a></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>The vehicle options to prepare physical options for</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <a href="interfaces/physicaloptions.html" class="tsd-signature-type" data-tsd-kind="Interface">PhysicalOptions</a></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-function">
+					<a name="authenticity_level2" class="tsd-anchor"></a>
+					<h3>AUTHENTICITY_<wbr>LEVEL2</h3>
+					<ul class="tsd-signatures tsd-kind-function">
+						<li class="tsd-signature tsd-kind-icon">AUTHENTICITY_<wbr>LEVEL2<span class="tsd-signature-symbol">(</span>vehicleOptions<span class="tsd-signature-symbol">?: </span><a href="interfaces/vehicleoptions.html" class="tsd-signature-type" data-tsd-kind="Interface">VehicleOptions</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="interfaces/physicaloptions.html" class="tsd-signature-type" data-tsd-kind="Interface">PhysicalOptions</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/davidlinner/rover/blob/edc70c1/src/Authenticity.ts#L95">Authenticity.ts:95</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -275,6 +364,9 @@
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
+					<li class=" tsd-kind-enum">
+						<a href="enums/vehicletype.html" class="tsd-kind-icon">Vehicle<wbr>Type</a>
+					</li>
 					<li class=" tsd-kind-class">
 						<a href="classes/simulation.html" class="tsd-kind-icon">Simulation</a>
 					</li>
@@ -306,16 +398,28 @@
 						<a href="index.html#controlloop" class="tsd-kind-icon">Control<wbr>Loop</a>
 					</li>
 					<li class=" tsd-kind-type-alias">
+						<a href="index.html#engines" class="tsd-kind-icon">Engines</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
 						<a href="index.html#physicalconstraints" class="tsd-kind-icon">Physical<wbr>Constraints</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="index.html#steering" class="tsd-kind-icon">Steering</a>
 					</li>
 					<li class=" tsd-kind-variable">
 						<a href="index.html#max_proximity_distance" class="tsd-kind-icon">MAX_<wbr>PROXIMITY_<wbr>DISTANCE</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="index.html#target_radius" class="tsd-kind-icon">TARGET_<wbr>RADIUS</a>
 					</li>
 					<li class=" tsd-kind-function">
 						<a href="index.html#authenticity_level0" class="tsd-kind-icon">AUTHENTICITY_<wbr>LEVEL0</a>
 					</li>
 					<li class=" tsd-kind-function">
 						<a href="index.html#authenticity_level1" class="tsd-kind-icon">AUTHENTICITY_<wbr>LEVEL1</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="index.html#authenticity_level2" class="tsd-kind-icon">AUTHENTICITY_<wbr>LEVEL2</a>
 					</li>
 				</ul>
 			</nav>
@@ -328,6 +432,7 @@
 		<div class="tsd-legend-group">
 			<ul class="tsd-legend">
 				<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li>
 				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
 			</ul>
 			<ul class="tsd-legend">

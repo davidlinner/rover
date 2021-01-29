@@ -3,58 +3,101 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Simulation = exports.MAX_PROXIMITY_DISTANCE = void 0;
+exports.Simulation = exports.MAX_PROXIMITY_DISTANCE = exports.TARGET_RADIUS = void 0;
 const p2_1 = __importDefault(require("p2"));
 const latlon_spherical_js_1 = __importDefault(require("geodesy/latlon-spherical.js"));
 const render_1 = __importDefault(require("./render"));
 const tools_1 = require("./tools");
+const types_1 = require("./types");
 const Authenticity_1 = require("./Authenticity");
-const ROVER_WIDTH = .5;
+const ROVER_WIDTH = 0.5;
 const ROVER_HEIGHT = 1.0;
+const ROVER_MASS_TYPE_ROVER = 10;
+const ROVER_MASS_TYPE_TANK = 10;
+exports.TARGET_RADIUS = 0.15;
 const MIN_TRACKING_POINT_DISTANCE = 1;
 exports.MAX_PROXIMITY_DISTANCE = 8;
 const MAX_SUB_STEPS = 5;
 const FIXED_DELTA_TIME = 1 / 60;
 const CONTROL_INTERVAL = 20;
-const BASE_ENGINE_FORCE = 2.0;
-const INITIAL_WHEEL_CONSTRAINTS = [
+const BASE_ENGINE_FORCE_TYPE_ROVER = 2.3;
+const BASE_ENGINE_FORCE_TYPE_TANK = 2.3;
+const WHEEL_BREAK_FORCE_TYPE_ROVER = BASE_ENGINE_FORCE_TYPE_ROVER * 0.5;
+const WHEEL_SIDE_FRICTION_TYPE_ROVER = BASE_ENGINE_FORCE_TYPE_ROVER * 2;
+const WHEEL_BREAK_FORCE_TYPE_TANK = BASE_ENGINE_FORCE_TYPE_TANK * 0.5;
+const WHEEL_SIDE_FRICTION_TYPE_TANK = BASE_ENGINE_FORCE_TYPE_TANK * 0.5;
+const INITIAL_WHEEL_CONSTRAINTS_TYPE_ROVER = [
     {
-        localPosition: [0.25, 0.25],
-        brakeForce: 0.5,
-        sideFriction: 0.1
+        localPosition: [-0.25, 0.5],
+        brakeForce: WHEEL_BREAK_FORCE_TYPE_ROVER,
+        sideFriction: WHEEL_SIDE_FRICTION_TYPE_ROVER,
     },
     {
-        localPosition: [-0.25, 0.25],
-        brakeForce: 0.5,
-        sideFriction: 0.01
-    },
-    {
-        localPosition: [0.25, 0],
-        brakeForce: 0.5,
-        sideFriction: 0.5
+        localPosition: [0.25, 0.5],
+        brakeForce: WHEEL_BREAK_FORCE_TYPE_ROVER,
+        sideFriction: WHEEL_SIDE_FRICTION_TYPE_ROVER,
     },
     {
         localPosition: [-0.25, 0],
-        brakeForce: 0.5,
-        sideFriction: 0.5
+        brakeForce: WHEEL_BREAK_FORCE_TYPE_ROVER,
+        sideFriction: 0,
     },
     {
-        localPosition: [0.25, -0.25],
-        brakeForce: 0.5,
-        sideFriction: 0.1
+        localPosition: [0.25, 0],
+        brakeForce: WHEEL_BREAK_FORCE_TYPE_ROVER,
+        sideFriction: 0,
+    },
+    {
+        localPosition: [-0.25, -0.5],
+        brakeForce: WHEEL_BREAK_FORCE_TYPE_ROVER,
+        sideFriction: WHEEL_SIDE_FRICTION_TYPE_ROVER,
+    },
+    {
+        localPosition: [0.25, -0.5],
+        brakeForce: WHEEL_BREAK_FORCE_TYPE_ROVER,
+        sideFriction: WHEEL_SIDE_FRICTION_TYPE_ROVER,
+    },
+];
+const INITIAL_WHEEL_CONSTRAINTS_TYPE_TANK = [
+    {
+        localPosition: [-0.25, 0.25],
+        brakeForce: WHEEL_BREAK_FORCE_TYPE_TANK,
+        sideFriction: WHEEL_SIDE_FRICTION_TYPE_TANK,
+    },
+    {
+        localPosition: [0.25, 0.25],
+        brakeForce: WHEEL_BREAK_FORCE_TYPE_TANK,
+        sideFriction: WHEEL_SIDE_FRICTION_TYPE_TANK,
+    },
+    {
+        localPosition: [-0.25, 0],
+        brakeForce: WHEEL_BREAK_FORCE_TYPE_TANK,
+        sideFriction: WHEEL_SIDE_FRICTION_TYPE_TANK,
+    },
+    {
+        localPosition: [0.25, 0],
+        brakeForce: WHEEL_BREAK_FORCE_TYPE_TANK,
+        sideFriction: WHEEL_SIDE_FRICTION_TYPE_TANK,
     },
     {
         localPosition: [-0.25, -0.25],
-        brakeForce: 0.5,
-        sideFriction: 0.1
+        brakeForce: WHEEL_BREAK_FORCE_TYPE_TANK,
+        sideFriction: WHEEL_SIDE_FRICTION_TYPE_TANK,
+    },
+    {
+        localPosition: [0.25, -0.25],
+        brakeForce: WHEEL_BREAK_FORCE_TYPE_TANK,
+        sideFriction: WHEEL_SIDE_FRICTION_TYPE_TANK,
     },
 ];
 class Simulation {
     constructor(simulationOptions) {
+        this.steering = [180, 180, 180, 180];
         this.trace = [];
         this.markers = [];
         this.obstacles = [];
         this.proximityValues = [];
+        this.targets = [];
         this.lastRenderTime = 0;
         this.startTime = 0;
         this.interval = null;
@@ -72,25 +115,31 @@ class Simulation {
                 width: ROVER_WIDTH,
                 height: ROVER_HEIGHT,
                 wheelConstraints: this.wheelConstraints,
-            }, this.trace, this.markers, this.obstacles, this.proximityValues, this.renderingOptions);
+            }, this.trace, this.markers, this.obstacles, this.targets, this.proximityValues, this.renderingOptions);
         };
-        const { loop, element, renderingOptions = {}, physicalConstraints = Authenticity_1.AUTHENTICITY_LEVEL0, locationsOfInterest = [], vehicleOptions = { engineCount: 2 }, obstacles = [], origin, } = simulationOptions;
+        const { loop, element, renderingOptions = {}, physicalConstraints = Authenticity_1.AUTHENTICITY_LEVEL0, locationsOfInterest = [], obstacles = [], targets = [], origin, vehicleType = types_1.VehicleType.Tank, } = simulationOptions;
         const { height = 500, width = 500 } = renderingOptions;
         this.loop = loop;
-        const canvas = this.createCanvas(element, width, height);
+        this.vehicleType = vehicleType;
+        this.engines = vehicleType === types_1.VehicleType.Rover ? [0, 0, 0, 0, 0, 0] : [0, 0];
+        const canvas = Simulation.createCanvas(element, width, height);
         const context = canvas.getContext('2d');
         if (!context) {
             throw new Error('Cannot create 2D rendering context for canvas.');
         }
         this.initMarkers(locationsOfInterest, origin);
         const world = new p2_1.default.World({
-            gravity: [0, 0]
+            gravity: [0, 0],
         });
-        const rover = new p2_1.default.Body({ mass: 1 });
+        const rover = new p2_1.default.Body({
+            mass: this.vehicleType === types_1.VehicleType.Rover ? ROVER_MASS_TYPE_ROVER : ROVER_MASS_TYPE_TANK,
+        });
         rover.addShape(new p2_1.default.Box({ width: ROVER_WIDTH, height: ROVER_HEIGHT }));
         world.addBody(rover);
         const vehicle = new p2_1.default.TopDownVehicle(rover);
-        const wheelConstraints = INITIAL_WHEEL_CONSTRAINTS.map(({ sideFriction, brakeForce, localPosition }) => {
+        const wheelConstraints = (this.vehicleType === types_1.VehicleType.Rover
+            ? INITIAL_WHEEL_CONSTRAINTS_TYPE_ROVER
+            : INITIAL_WHEEL_CONSTRAINTS_TYPE_TANK).map(({ sideFriction, brakeForce, localPosition }) => {
             const wheelConstraint = vehicle.addWheel({ localPosition });
             wheelConstraint.setSideFriction(sideFriction);
             wheelConstraint.setBrakeForce(brakeForce);
@@ -100,17 +149,19 @@ class Simulation {
         this.world = world;
         this.rover = rover;
         this.wheelConstraints = wheelConstraints;
-        this.vehicleOptions = vehicleOptions;
-        this.engines = Array.from({ length: vehicleOptions.engineCount }, () => 0);
         this.context = context;
-        this.renderingOptions = Object.assign(Object.assign({}, renderingOptions), { width,
-            height });
-        this.physicalOptions = physicalConstraints(vehicleOptions);
+        this.renderingOptions = {
+            ...renderingOptions,
+            width,
+            height,
+        };
+        this.physicalOptions = physicalConstraints({ engineCount: 6 });
         this.offset = new latlon_spherical_js_1.default(origin.latitude, origin.longitude);
         this.initObstacles(origin, obstacles);
+        this.initTargets(origin, targets);
         this.updateProximityValues();
     }
-    createCanvas(parent, width, height) {
+    static createCanvas(parent, width, height) {
         const document = parent.ownerDocument;
         const canvas = document.createElement('canvas');
         canvas.width = width;
@@ -118,31 +169,53 @@ class Simulation {
         parent.appendChild(canvas);
         return canvas;
     }
+    static toRelativeOffset(origin, position) {
+        const pos = new latlon_spherical_js_1.default(position.latitude, position.longitude);
+        const unsignedX = pos.distanceTo(new latlon_spherical_js_1.default(pos.latitude, origin.longitude));
+        const unsignedY = pos.distanceTo(new latlon_spherical_js_1.default(origin.latitude, pos.longitude));
+        const signedX = unsignedX * (origin.longitude - pos.longitude > 0 ? -1 : 1);
+        const signedY = unsignedY * (origin.latitude - pos.latitude > 0 ? -1 : 1);
+        return [signedX, signedY];
+    }
     initMarkers(locationsOfInterest, origin) {
         if (origin) {
-            this.markers = locationsOfInterest.map(({ label, latitude, longitude }) => {
-                const marker = new latlon_spherical_js_1.default(latitude, longitude);
-                const unsignedX = marker.distanceTo(new latlon_spherical_js_1.default(latitude, origin.longitude));
-                const unsignedY = marker.distanceTo(new latlon_spherical_js_1.default(origin.latitude, longitude));
-                const signedX = unsignedX * (origin.longitude > marker.longitude ? 1 : -1);
-                const signedY = unsignedY * (origin.latitude > marker.latitude ? -1 : 1);
+            this.markers = locationsOfInterest.map((marker) => {
+                const [x, y] = Simulation.toRelativeOffset(origin, marker);
+                console.log('MARK ', x.toFixed(6), y.toFixed(6));
                 return {
-                    position: [signedX, signedY],
-                    label
+                    position: [x, y],
+                    label: marker.label,
                 };
+            });
+        }
+    }
+    initTargets(origin, targets) {
+        if (origin) {
+            this.targets = targets.map((target) => {
+                const [x, y] = Simulation.toRelativeOffset(origin, target);
+                const targetShape = new p2_1.default.Circle({ radius: exports.TARGET_RADIUS, sensor: true, collisionResponse: false });
+                const targetBody = new p2_1.default.Body({
+                    mass: 0,
+                    position: [-x, y],
+                    fixedX: true,
+                    fixedY: true,
+                    fixedRotation: true,
+                    collisionResponse: false,
+                });
+                targetBody.addShape(targetShape);
+                this.world.addBody(targetBody);
+                return { position: [x, y], latitude: target.latitude, longitude: target.longitude };
             });
         }
     }
     initObstacles(origin, obstacles) {
         if (origin) {
-            this.obstacles = obstacles.map(({ radius, latitude, longitude }) => {
-                const obstacleLatLon = new latlon_spherical_js_1.default(latitude, longitude);
-                const x = obstacleLatLon.distanceTo(new latlon_spherical_js_1.default(latitude, origin.longitude));
-                const y = obstacleLatLon.distanceTo(new latlon_spherical_js_1.default(origin.latitude, longitude));
-                const obstacleShape = new p2_1.default.Circle({ radius });
+            this.obstacles = obstacles.map((obstacle) => {
+                const [x, y] = Simulation.toRelativeOffset(origin, obstacle);
+                const obstacleShape = new p2_1.default.Circle({ radius: obstacle.radius });
                 const obstacleBody = new p2_1.default.Body({
                     mass: 0,
-                    position: [x, y],
+                    position: [-x, y],
                     angle: 0,
                     angularVelocity: 0,
                     fixedX: true,
@@ -154,45 +227,69 @@ class Simulation {
                 this.world.addBody(obstacleBody);
                 return {
                     position: [x, y],
-                    radius,
+                    radius: obstacle.radius,
                 };
             });
         }
     }
     updateProximityValues() {
-        const { errorProximity = d => d } = this.physicalOptions;
+        const { errorProximity = (d) => d } = this.physicalOptions;
         const position = this.rover.interpolatedPosition;
         const [baseX, baseY] = position;
         const resolution = 180;
         for (let index = 0; index < resolution; index++) {
-            const directionAngleInRadiant = (((Math.PI * 2) / resolution) * index) + this.rover.interpolatedAngle;
-            const xx = baseX + (exports.MAX_PROXIMITY_DISTANCE * Math.cos(directionAngleInRadiant + Math.PI / 2));
-            const yy = baseY + (exports.MAX_PROXIMITY_DISTANCE * Math.sin(directionAngleInRadiant + Math.PI / 2));
+            const directionAngleInRadiant = ((Math.PI * 2) / resolution) * index + this.rover.interpolatedAngle;
+            const xx = baseX + exports.MAX_PROXIMITY_DISTANCE * Math.cos(directionAngleInRadiant + Math.PI / 2);
+            const yy = baseY + exports.MAX_PROXIMITY_DISTANCE * Math.sin(directionAngleInRadiant + Math.PI / 2);
             const to = [xx, yy];
             const ray = new p2_1.default.Ray({ from: position, to, mode: p2_1.default.Ray.CLOSEST, skipBackfaces: true });
             const rayResult = new p2_1.default.RaycastResult();
             rayResult.reset();
             this.world.raycast(rayResult, ray);
-            const rayDistance = errorProximity(Math.abs(rayResult.getHitDistance(ray)));
-            this.proximityValues[index] = rayDistance >= exports.MAX_PROXIMITY_DISTANCE - 0.01 ? -1 : rayDistance;
+            const rayDistance = Math.abs(rayResult.getHitDistance(ray));
+            this.proximityValues[index] = errorProximity(rayDistance);
         }
     }
-    getRoverHeading() {
+    get targetFinderSignal() {
+        const roverPos = [
+            this.rover.interpolatedPosition[0] * -1,
+            this.rover.interpolatedPosition[1],
+        ];
+        const roverCords = this.positionToCoordinates(roverPos);
+        const roverLoc = new latlon_spherical_js_1.default(roverCords.latitude, roverCords.longitude);
+        let signalStrength = 0;
+        for (const target of this.targets) {
+            const targetCords = this.positionToCoordinates(target.position);
+            const targetLoc = new latlon_spherical_js_1.default(targetCords.latitude, targetCords.longitude);
+            const distance = roverLoc.distanceTo(targetLoc);
+            signalStrength += (1 / distance) * 0.02;
+        }
+        return Math.min(signalStrength, 1);
+    }
+    get roverHeading() {
         let heading = this.rover.angle % (2 * Math.PI);
         if (heading < 0) {
             heading += 2 * Math.PI;
         }
         const trueHeading = (180 / Math.PI) * heading;
-        const { errorHeading = d => d } = this.physicalOptions;
+        const { errorHeading = (d) => d } = this.physicalOptions;
         return errorHeading(trueHeading);
     }
-    getRoverLocation() {
-        const [x, y] = this.rover.interpolatedPosition;
-        const trueLocation = {
+    positionToCoordinates(position) {
+        const [x, y] = position;
+        const coordinates = {
             longitude: this.offset.destinationPoint(Math.abs(x), x <= 0 ? 270 : 90).longitude,
-            latitude: this.offset.destinationPoint(Math.abs(y), y <= 0 ? 180 : 0).latitude
+            latitude: this.offset.destinationPoint(Math.abs(y), y <= 0 ? 180 : 0).latitude,
         };
-        const { errorLocation = location => location } = this.physicalOptions;
+        return coordinates;
+    }
+    get roverLocation() {
+        const roverPos = [
+            this.rover.interpolatedPosition[0] * -1,
+            this.rover.interpolatedPosition[1],
+        ];
+        const trueLocation = this.positionToCoordinates(roverPos);
+        const { errorLocation = (location) => location } = this.physicalOptions;
         return errorLocation(trueLocation);
     }
     start() {
@@ -200,33 +297,59 @@ class Simulation {
             throw new Error('Simulation is already running.');
         }
         this.startTime = performance.now();
-        const { engineCount } = this.vehicleOptions;
         this.interval = window.setInterval(() => {
             const clock = performance.now() - this.startTime;
             this.updateProximityValues();
             const actuatorValues = this.loop({
-                heading: this.getRoverHeading(),
-                location: this.getRoverLocation(),
+                heading: this.roverHeading,
+                location: this.roverLocation,
                 proximity: this.proximityValues,
+                targetFinderSignal: this.targetFinderSignal,
                 clock,
             }, {
-                engines: this.engines
+                engines: [...this.engines],
+                steering: [...this.steering],
             });
-            const { engines } = actuatorValues;
+            const { engines, steering } = actuatorValues;
             const { errorEngine = [] } = this.physicalOptions;
-            if (engines.length !== engineCount) {
-                console.error(`${engines.length} power values passed, while vehicle has ${engineCount} engines.`);
-                return;
+            if (engines.length !== this.engines.length) {
+                console.error(`Invalid number of engine power arguments, expected ${this.engines.length}, found ${engines.length}`);
             }
-            for (let i = 0; i < engines.length; i++) {
-                if (engines[i] <= 1.0 && engines[i] >= -1.0) {
-                    const errorFunction = errorEngine[i] || (v => v);
-                    this.engines[i] = engines[i];
+            if (engines.find(value => value < -1.0 || value > 1.0)) {
+                console.error('One or more engine power values incorrect, must be in of range [-1.0 : 1.0]');
+            }
+            else {
+                for (let i = 0; i < this.wheelConstraints.length; i++) {
+                    const k = i % engines.length;
+                    const errorFunction = errorEngine[i] || ((v) => v);
                     this.wheelConstraints[i].engineForce =
-                        BASE_ENGINE_FORCE * errorFunction(engines[i % engineCount]);
+                        (this.vehicleType === types_1.VehicleType.Rover
+                            ? BASE_ENGINE_FORCE_TYPE_ROVER
+                            : BASE_ENGINE_FORCE_TYPE_TANK) * errorFunction(engines[k]);
+                }
+                this.engines = engines;
+            }
+            if (this.vehicleType === types_1.VehicleType.Rover) {
+                if (steering.length === 4) {
+                    steering.forEach((steeringValue, index) => {
+                        if (steeringValue >= 0 || steeringValue <= 360) {
+                            const mappedSteeringValue = ((steeringValue - 180) * Math.PI) / 180;
+                            if (index <= 2) {
+                                this.steering[index] = steeringValue;
+                                this.wheelConstraints[index].steerValue = mappedSteeringValue;
+                            }
+                            else {
+                                this.steering[index + 2] = steeringValue;
+                                this.wheelConstraints[index + 2].steerValue = mappedSteeringValue;
+                            }
+                        }
+                        else {
+                            console.error('Steering value out of range [0 : 360]');
+                        }
+                    });
                 }
                 else {
-                    console.error('Wheel power out of range [-1.0 : 1.0]');
+                    console.error('The engines actuator array must have a length of 4 => [number x4]');
                 }
             }
         }, CONTROL_INTERVAL);
