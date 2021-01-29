@@ -1,7 +1,7 @@
 ## About The Project
 
 This library implements a programmable simulation and top-down visualization for a simple land vehicle. The library was 
-created as teaching material in the Internet of Things (IOT) project for, with and by the students of 
+created as teaching material in the Internet of Things (IOT) project for and by the students of 
 [Berlin School of Design and Communication](https://www.srh-university-berlin.de/).   
 
 [![Rover Simulation][product-screenshot]](/)
@@ -26,7 +26,7 @@ environment with the following features:
 - simulated measurement "errors" on all sensor values
 - implementation with an easy to learn script language, preferably JavaScript/Typescript
 
-After some research we came to the conclusion our requirements might be too special and created our own simulation. 
+After some research we came to the conclusion our requirements are too special and created our own simulation. 
 Here it is.  
 
 ### Built With
@@ -50,6 +50,8 @@ _with npm_
 npm install github:davidlinner/rover
 ```
 
+Proper NPM package about to follow...
+
 <!-- USAGE EXAMPLES -->
 
 ## Usage
@@ -63,7 +65,7 @@ import { ControlLoop, Simulation, LocationOfInterest, RoverType } from 'rover';
 // The control function will be called periodically in the control loop
 const loop: ControlLoop = ({ location, heading, clock }, { engines, steering }) => {
 	return {
-		engines: [0.5, 0.8, 0.5, 0.8, 0.5, 0.8],
+		engines: [0.8, 0.8],
 	};
 };
 
@@ -72,8 +74,8 @@ const simulation = new Simulation({
 	// add above loop
 	loop,
 
-	// Type of vehicle (tank or rover)
-	roverType: RoverType.tank,
+	// type of vehicle (tank or rover); tank expects two engine argument left and right
+	vehicleType: VehicleType.tank,
 
 	// define the origin offset of the rover on the planet,
 	origin: {
@@ -106,53 +108,52 @@ const simulation = new Simulation({
 simulation.start();
 ```
 
+**Adding measurement errors**
+
 Additionally, you can configure a more realistic behavior for the simulation
 by setting the `physicalContraints` property. Three constraint collections, `AUTHENTICITY_LEVEL0`, 
 `AUTHENTICITY_LEVEL1`, `AUTHENTICITY_LEVEL2` are predefined, while the first means no errors at all. 
+
 `AUTHENTICITY_LEVEL1`, in contrast, adds random measurement errors with equal distribution to heading and location and a little, random unbalance to the two engines.
 Since the random seeds are different for each run of the simulation error correction has to
 be added to the control loop.
+
+`AUTHENTICITY_LEVEL2` is similar to `AUTHENTICITY_LEVEL1`, but adds errors with a more realistic gaussian distribution. 
 
 Example with some environmental error:
 
 ```js
 // Import main Simulation class and error factory function
-import { Simulation, AUTHENTICITY_LEVEL2, RoverType } from 'rover';
-
-// Create a simple control function which should make the vehicle move straight forward
-const loop = ({ location, heading, clock }, { engines }) => {
-	return {
-		engines: [0.8, 0.8, 0.8, 0.8, 0.8, 0.8],
-	};
-};
+import { Simulation, AUTHENTICITY_LEVEL2, /*...*/ } from 'rover';
+//...
 
 // Create a new simulation
 const simulation = new Simulation({
-	// add above loop
-	loop,
-    
-	roverType: RoverType.tank,
-    
-	// define the origin offset of the rover on the planet,
-	origin: {
-		latitude: 52.477050353132384,
-		longitude: 13.395281227289209,
-	},
-
-	// select the DOM element the visualization canvas should be appended to as child
-	element: document.querySelector('main'),
-
-	// Set the factory function for physical constraints
-	// Predefined constraints are AUTHENTICITY_LEVEL0, AUTHENTICITY_LEVEL1 and AUTHENTICITY_LEVEL2, while first means no error
+	//...
 	physicalConstraints: AUTHENTICITY_LEVEL2,
+    //...
 });
 
-// as soon as the simulation is created the visualization is rendered,
-// but have to explicitely start the control loop
-simulation.start();
 ```
 
-Please consult the API Docs for details.
+**Adding obstacles**
+
+Similar to locations of interest, obstacles can be added in advance to the simulation. Obstacles all have a circular shape, 
+but the radius can be configured in meters. To create more irregularly shaped obstacles, create overlapping circles.  
+
+```javascript
+const simulation = new Simulation({
+    //...
+    obstacles: [{
+        radius: 1,
+        latitude: 52.477000353132384,
+        longitude: 13.395281227289209
+    }],
+    //...
+});
+```
+
+Please consult the API Docs for more details.
 
 -   [API Docs](https://davidlinner.github.io/rover/)
 

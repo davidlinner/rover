@@ -452,8 +452,8 @@ class Simulation {
                     clock,
                 },
                 {
-                    engines: this.engines,
-                    steering: this.steering,
+                    engines: [...this.engines],
+                    steering: [...this.steering],
                 }
             );
 
@@ -461,22 +461,22 @@ class Simulation {
 
             const {errorEngine = []} = this.physicalOptions;
 
-            for (let i = 0; i < engines.length; i++) {
-                if (engines[i] <= 1.0 && engines[i] >= -1.0) {
-                    this.engines[i] = engines[i];
-                } else {
-                    console.error(`Wheel power for wheel ${i} out of range [-1.0 : 1.0]`);
+            if(engines.length !== this.engines.length){
+                console.error(`Invalid number of engine power arguments, expected ${this.engines.length}, found ${engines.length}`);
+            } if(engines.find(value => value < -1.0 || value > 1.0)){
+                console.error('One or more engine power values incorrect, must be in of range [-1.0 : 1.0]');
+            } else {
+                for (let i = 0; i < this.wheelConstraints.length; i++) {
+                    const k = i % engines.length;
+                    const errorFunction = errorEngine[i] || ((v) => v);
+                    this.wheelConstraints[i].engineForce =
+                        (this.vehicleType === VehicleType.Rover
+                            ? BASE_ENGINE_FORCE_TYPE_ROVER
+                            : BASE_ENGINE_FORCE_TYPE_TANK) * errorFunction(engines[k]);
                 }
+                this.engines = engines;
             }
 
-            for (let i = 0; i < this.wheelConstraints.length; i++) {
-                const k = i % engines.length;
-                const errorFunction = errorEngine[i] || ((v) => v);
-                this.wheelConstraints[i].engineForce =
-                    (this.vehicleType === VehicleType.Rover
-                        ? BASE_ENGINE_FORCE_TYPE_ROVER
-                        : BASE_ENGINE_FORCE_TYPE_TANK) * errorFunction(engines[k]);
-            }
 
             if (this.vehicleType === VehicleType.Rover) {
                 if (steering.length === 4) {

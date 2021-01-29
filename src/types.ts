@@ -130,8 +130,8 @@ export type Engines = [number, number, number, number, number, number] | [number
 export type Steering = [number, number, number, number];
 
 export enum VehicleType {
-	Tank = 'Tank',
-	Rover = 'Rover',
+	Tank = 'tank',
+	Rover = 'rover',
 }
 
 /**
