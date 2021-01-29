@@ -92,7 +92,6 @@ const INITIAL_WHEEL_CONSTRAINTS_TYPE_TANK = [
 ];
 class Simulation {
     constructor(simulationOptions) {
-        this.engines = [0, 0, 0, 0, 0, 0];
         this.steering = [180, 180, 180, 180];
         this.trace = [];
         this.markers = [];
@@ -118,10 +117,11 @@ class Simulation {
                 wheelConstraints: this.wheelConstraints,
             }, this.trace, this.markers, this.obstacles, this.targets, this.proximityValues, this.renderingOptions);
         };
-        const { loop, element, renderingOptions = {}, physicalConstraints = Authenticity_1.AUTHENTICITY_LEVEL0, locationsOfInterest = [], obstacles = [], targets = [], origin, roverType, } = simulationOptions;
+        const { loop, element, renderingOptions = {}, physicalConstraints = Authenticity_1.AUTHENTICITY_LEVEL0, locationsOfInterest = [], obstacles = [], targets = [], origin, vehicleType = types_1.VehicleType.Tank, } = simulationOptions;
         const { height = 500, width = 500 } = renderingOptions;
         this.loop = loop;
-        this.roverType = roverType;
+        this.vehicleType = vehicleType;
+        this.engines = vehicleType === types_1.VehicleType.Rover ? [0, 0, 0, 0, 0, 0] : [0, 0];
         const canvas = Simulation.createCanvas(element, width, height);
         const context = canvas.getContext('2d');
         if (!context) {
@@ -132,12 +132,12 @@ class Simulation {
             gravity: [0, 0],
         });
         const rover = new p2_1.default.Body({
-            mass: this.roverType === types_1.RoverType.rover ? ROVER_MASS_TYPE_ROVER : ROVER_MASS_TYPE_TANK,
+            mass: this.vehicleType === types_1.VehicleType.Rover ? ROVER_MASS_TYPE_ROVER : ROVER_MASS_TYPE_TANK,
         });
         rover.addShape(new p2_1.default.Box({ width: ROVER_WIDTH, height: ROVER_HEIGHT }));
         world.addBody(rover);
         const vehicle = new p2_1.default.TopDownVehicle(rover);
-        const wheelConstraints = (this.roverType === types_1.RoverType.rover
+        const wheelConstraints = (this.vehicleType === types_1.VehicleType.Rover
             ? INITIAL_WHEEL_CONSTRAINTS_TYPE_ROVER
             : INITIAL_WHEEL_CONSTRAINTS_TYPE_TANK).map(({ sideFriction, brakeForce, localPosition }) => {
             const wheelConstraint = vehicle.addWheel({ localPosition });
@@ -312,25 +312,23 @@ class Simulation {
             });
             const { engines, steering } = actuatorValues;
             const { errorEngine = [] } = this.physicalOptions;
-            if (engines.length === 6) {
-                for (let i = 0; i < engines.length; i++) {
-                    if (engines[i] <= 1.0 && engines[i] >= -1.0) {
-                        this.engines[i] = engines[i];
-                        const errorFunction = errorEngine[i] || ((v) => v);
-                        this.wheelConstraints[i].engineForce =
-                            (this.roverType === types_1.RoverType.rover
-                                ? BASE_ENGINE_FORCE_TYPE_ROVER
-                                : BASE_ENGINE_FORCE_TYPE_TANK) * errorFunction(engines[i]);
-                    }
-                    else {
-                        console.error('Wheel power out of range [-1.0 : 1.0]');
-                    }
+            for (let i = 0; i < engines.length; i++) {
+                if (engines[i] <= 1.0 && engines[i] >= -1.0) {
+                    this.engines[i] = engines[i];
+                }
+                else {
+                    console.error(`Wheel power for wheel ${i} out of range [-1.0 : 1.0]`);
                 }
             }
-            else {
-                console.error('The engines actuator array must have a length of 6 => [number x6]');
+            for (let i = 0; i < this.wheelConstraints.length; i++) {
+                const k = i % engines.length;
+                const errorFunction = errorEngine[i] || ((v) => v);
+                this.wheelConstraints[i].engineForce =
+                    (this.vehicleType === types_1.VehicleType.Rover
+                        ? BASE_ENGINE_FORCE_TYPE_ROVER
+                        : BASE_ENGINE_FORCE_TYPE_TANK) * errorFunction(engines[k]);
             }
-            if (this.roverType === types_1.RoverType.rover) {
+            if (this.vehicleType === types_1.VehicleType.Rover) {
                 if (steering.length === 4) {
                     steering.forEach((steeringValue, index) => {
                         if (steeringValue >= 0 || steeringValue <= 360) {

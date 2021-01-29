@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RoverType = void 0;
-var RoverType;
-(function (RoverType) {
-    RoverType["tank"] = "tank";
-    RoverType["rover"] = "rover";
-})(RoverType = exports.RoverType || (exports.RoverType = {}));
+exports.VehicleType = void 0;
+var VehicleType;
+(function (VehicleType) {
+    VehicleType["Tank"] = "Tank";
+    VehicleType["Rover"] = "Rover";
+})(VehicleType = exports.VehicleType || (exports.VehicleType = {}));

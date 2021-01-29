@@ -11,7 +11,7 @@ export interface SimulationOptions {
 	/**
 	 * Type of the rover, either 'tank' or 'rover'
 	 */
-	roverType: RoverType;
+	vehicleType: VehicleType;
 
 	/**
 	 * Point on the globe which should be used as starting point for the simulation.
@@ -120,7 +120,7 @@ export interface ActuatorValues {
  * Power values of all engines, left to right, top to bottom. Values have to
  * be in the range [-1.0 : 1.0], where 0 means the vehicle is at rest.
  */
-export type Engines = [number, number, number, number, number, number];
+export type Engines = [number, number, number, number, number, number] | [number, number];
 
 /**
  * Degree values of all steerable wheels, left to right, top to bottom. Values have to
@@ -129,9 +129,9 @@ export type Engines = [number, number, number, number, number, number];
  */
 export type Steering = [number, number, number, number];
 
-export enum RoverType {
-	tank = 'tank',
-	rover = 'rover',
+export enum VehicleType {
+	Tank = 'Tank',
+	Rover = 'Rover',
 }
 
 /**
