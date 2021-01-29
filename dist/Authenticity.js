@@ -3,22 +3,31 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AUTHENTICITY_LEVEL1 = exports.AUTHENTICITY_LEVEL0 = void 0;
+exports.AUTHENTICITY_LEVEL2 = exports.AUTHENTICITY_LEVEL1 = exports.AUTHENTICITY_LEVEL0 = void 0;
 const latlon_spherical_js_1 = __importDefault(require("geodesy/latlon-spherical.js"));
+const Simulation_1 = require("./Simulation");
+const utils_1 = require("./utils");
 function AUTHENTICITY_LEVEL0(vehicleOptions) {
-    const engineCount = (vehicleOptions === null || vehicleOptions === void 0 ? void 0 : vehicleOptions.engineCount) || 2;
+    const engineCount = vehicleOptions?.engineCount || 2;
     const errorHeading = (heading) => heading;
-    const errorEngine = new Array(engineCount).map(() => ((value) => value));
+    const errorEngine = new Array(engineCount).map(() => (value) => value);
     const errorLocation = (location) => location;
+    const errorProximity = (distance) => distance;
     return {
         errorEngine,
         errorHeading,
-        errorLocation
+        errorLocation,
+        errorProximity,
     };
 }
 exports.AUTHENTICITY_LEVEL0 = AUTHENTICITY_LEVEL0;
+function biasedRandom(bias, influence = 1, min = 0, max = 1) {
+    const rnd = Math.random() * (max - min) + min;
+    const mix = Math.random() * influence;
+    return rnd * (1 - mix) + bias * mix;
+}
 function AUTHENTICITY_LEVEL1(vehicleOptions) {
-    const engineCount = (vehicleOptions === null || vehicleOptions === void 0 ? void 0 : vehicleOptions.engineCount) || 2;
+    const engineCount = vehicleOptions?.engineCount || 2;
     const maxHeadingError = 5;
     const maxEngineError = 0.01;
     const maxLocationError = 5;
@@ -33,13 +42,53 @@ function AUTHENTICITY_LEVEL1(vehicleOptions) {
         const l1 = l0.destinationPoint(Math.random() * maxLocationError, Math.random() * 359.999);
         return {
             latitude: l1.latitude,
-            longitude: l1.longitude
+            longitude: l1.longitude,
+        };
+    };
+    const errorProximity = (distance) => {
+        let error = (biasedRandom(0.5) - 0.5) * 0.2;
+        if (Math.floor(distance + 0.001) === Simulation_1.MAX_PROXIMITY_DISTANCE) {
+            error = (biasedRandom(0.25) - 0.25) * 0.1 * Simulation_1.MAX_PROXIMITY_DISTANCE;
+        }
+        if (Math.random() < 0.001) {
+            error = Simulation_1.MAX_PROXIMITY_DISTANCE * 10;
+        }
+        return distance + error;
+    };
+    return {
+        errorEngine,
+        errorHeading,
+        errorLocation,
+        errorProximity,
+    };
+}
+exports.AUTHENTICITY_LEVEL1 = AUTHENTICITY_LEVEL1;
+function AUTHENTICITY_LEVEL2(vehicleOptions) {
+    const engineCount = vehicleOptions?.engineCount || 2;
+    const maxHeadingError = 5;
+    const maxEngineError = 0.01;
+    const maxLocationError = 5;
+    const errorHeading = (heading) => {
+        const staticHeadingError = utils_1.randn_bm(-maxHeadingError, maxHeadingError);
+        return (360 + heading + staticHeadingError) % 360;
+    };
+    const errorEngine = Array.from({ length: engineCount }, () => {
+        const staticEngineError = utils_1.randn_bm(-maxEngineError, maxEngineError);
+        return (value) => value + staticEngineError;
+    });
+    const errorLocation = (location) => {
+        const { latitude, longitude } = location;
+        const l0 = new latlon_spherical_js_1.default(latitude, longitude);
+        const l1 = l0.destinationPoint(utils_1.randn_bm(-maxLocationError, maxLocationError), Math.random() * 359.999);
+        return {
+            latitude: l1.latitude,
+            longitude: l1.longitude,
         };
     };
     return {
         errorEngine,
         errorHeading,
-        errorLocation
+        errorLocation,
     };
 }
-exports.AUTHENTICITY_LEVEL1 = AUTHENTICITY_LEVEL1;
+exports.AUTHENTICITY_LEVEL2 = AUTHENTICITY_LEVEL2;

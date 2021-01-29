@@ -90,6 +90,7 @@
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="sensorvalues.html#clock" class="tsd-kind-icon">clock</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="sensorvalues.html#heading" class="tsd-kind-icon">heading</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="sensorvalues.html#location" class="tsd-kind-icon">location</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="sensorvalues.html#proximity" class="tsd-kind-icon">proximity</a></li>
 							</ul>
 						</section>
 					</div>
@@ -103,7 +104,7 @@
 					<div class="tsd-signature tsd-kind-icon">clock<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/davidlinner/rover/blob/b4461c2/src/types.ts#L81">types.ts:81</a></li>
+							<li>Defined in <a href="https://github.com/lscheibel/rover/blob/f62830d/src/types.ts#L98">types.ts:98</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -118,7 +119,7 @@
 					<div class="tsd-signature tsd-kind-icon">heading<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/davidlinner/rover/blob/b4461c2/src/types.ts#L76">types.ts:76</a></li>
+							<li>Defined in <a href="https://github.com/lscheibel/rover/blob/f62830d/src/types.ts#L88">types.ts:88</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -133,12 +134,27 @@
 					<div class="tsd-signature tsd-kind-icon">location<span class="tsd-signature-symbol">:</span> <a href="location.html" class="tsd-signature-type" data-tsd-kind="Interface">Location</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/davidlinner/rover/blob/b4461c2/src/types.ts#L72">types.ts:72</a></li>
+							<li>Defined in <a href="https://github.com/lscheibel/rover/blob/f62830d/src/types.ts#L83">types.ts:83</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
 							<p>Current position of the vehicle (measured from center of the vehicle).</p>
+						</div>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
+					<a name="proximity" class="tsd-anchor"></a>
+					<h3>proximity</h3>
+					<div class="tsd-signature tsd-kind-icon">proximity<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">[]</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/lscheibel/rover/blob/f62830d/src/types.ts#L93">types.ts:93</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-comment tsd-typography">
+						<div class="lead">
+							<p>360° distance values to obstacles in clockwise order ...</p>
 						</div>
 					</div>
 				</section>
@@ -186,6 +202,9 @@
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
 								<a href="sensorvalues.html#location" class="tsd-kind-icon">location</a>
 							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-interface">
+								<a href="sensorvalues.html#proximity" class="tsd-kind-icon">proximity</a>
+							</li>
 						</ul>
 					</li>
 				</ul>
@@ -202,11 +221,20 @@
 					<li class=" tsd-kind-type-alias">
 						<a href="../index.html#physicalconstraints" class="tsd-kind-icon">Physical<wbr>Constraints</a>
 					</li>
+					<li class=" tsd-kind-variable">
+						<a href="../index.html#landmine_radius" class="tsd-kind-icon">LANDMINE_<wbr>RADIUS</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="../index.html#max_proximity_distance" class="tsd-kind-icon">MAX_<wbr>PROXIMITY_<wbr>DISTANCE</a>
+					</li>
 					<li class=" tsd-kind-function">
 						<a href="../index.html#authenticity_level0" class="tsd-kind-icon">AUTHENTICITY_<wbr>LEVEL0</a>
 					</li>
 					<li class=" tsd-kind-function">
 						<a href="../index.html#authenticity_level1" class="tsd-kind-icon">AUTHENTICITY_<wbr>LEVEL1</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="../index.html#authenticity_level2" class="tsd-kind-icon">AUTHENTICITY_<wbr>LEVEL2</a>
 					</li>
 				</ul>
 			</nav>
@@ -219,6 +247,7 @@
 		<div class="tsd-legend-group">
 			<ul class="tsd-legend">
 				<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li>
 				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
 			</ul>
 			<ul class="tsd-legend">
